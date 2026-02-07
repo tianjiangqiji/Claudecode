@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import type { ThinkingBlock as ThinkingBlockType } from '../../../models/ContentBlock';
 
 interface Props {
@@ -20,11 +20,31 @@ interface Props {
 
 defineProps<Props>();
 
-const expanded = ref(false);
+const expanded = ref(true);
+let autoCollapseTimer: ReturnType<typeof setTimeout> | null = null;
 
 function toggleExpanded() {
   expanded.value = !expanded.value;
+  // 手动展开时清除自动收起计时器
+  if (autoCollapseTimer) {
+    clearTimeout(autoCollapseTimer);
+    autoCollapseTimer = null;
+  }
 }
+
+// 挂载时默认展开，3秒后自动收起
+onMounted(() => {
+  autoCollapseTimer = setTimeout(() => {
+    expanded.value = false;
+    autoCollapseTimer = null;
+  }, 3000);
+});
+
+onUnmounted(() => {
+  if (autoCollapseTimer) {
+    clearTimeout(autoCollapseTimer);
+  }
+});
 </script>
 
 <style scoped>

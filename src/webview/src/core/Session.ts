@@ -207,14 +207,8 @@ export class Session {
     // 启动 channel（确保已带上当前 thinkingLevel）
     await this.launchClaude();
 
-    // 追加规则：如果启用且有内容，自动追加到用户输入末尾
-    let finalInput = input;
-    if (!isSlash) {
-      const config = this.claudeConfig();
-      if (config?.appendRuleEnabled && config?.appendRule) {
-        finalInput = input + '\n\n' + config.appendRule;
-      }
-    }
+    // 追加规则已在 SDK systemPrompt.append 中注入，不再追加到用户消息
+    const finalInput = input;
 
     const shouldIncludeSelection = includeSelection && !isSlash;
     let selectionPayload: SelectionRange | undefined;
@@ -392,8 +386,9 @@ export class Session {
       }
     } catch (error) {
       this.error(error instanceof Error ? error.message : String(error));
-      this.busy(false);
     } finally {
+      // 流结束（正常/中断/错误）都必须重置 busy 状态
+      this.busy(false);
       this.claudeChannelId(undefined);
     }
   }

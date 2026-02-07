@@ -34,7 +34,8 @@
       @input="handleInput"
       @keydown="handleKeydown"
       @paste="handlePaste"
-      @dragover="handleDragOver"
+      @dragenter.prevent
+      @dragover.prevent="handleDragOver"
       @drop="handleDrop"
     />
 

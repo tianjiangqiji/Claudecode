@@ -90,6 +90,9 @@ const selectedModelLabel = computed(() => {
   const model = modelList.value.find(m => m.id === props.selectedModel)
   if (model) return model.label
 
+  // 模型列表未加载时，直接显示已选模型 ID
+  if (props.selectedModel && props.selectedModel !== 'default') return props.selectedModel
+
   // 兜底
   if (modelList.value.length > 0) return modelList.value[0].label
   return '选择模型'

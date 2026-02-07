@@ -157,11 +157,11 @@ export class ClaudeSdkService implements IClaudeSdkService {
             // 环境变量
             env: this.getEnvironmentVariables(),
 
-            // 系统提示追加
+            // 系统提示追加（含用户追加规则）
             systemPrompt: {
                 type: 'preset',
                 preset: 'claude_code',
-                append: VS_CODE_APPEND_PROMPT
+                append: this.buildAppendPrompt()
             },
 
             // Hooks
@@ -272,6 +272,23 @@ export class ClaudeSdkService implements IClaudeSdkService {
             this.logService.error(`❌ 中断查询失败: ${error}`);
             throw error;
         }
+    }
+
+    /**
+     * 构建系统提示追加内容（VSCode 上下文 + 用户追加规则）
+     */
+    private buildAppendPrompt(): string {
+        let prompt = VS_CODE_APPEND_PROMPT;
+
+        // 注入用户追加规则
+        const appendRuleEnabled = this.configService.getValue<boolean>('claudix.appendRuleEnabled', true) ?? true;
+        const appendRule = this.configService.getValue<string>('claudix.appendRule', '') || '';
+        if (appendRuleEnabled && appendRule.trim()) {
+            prompt += `\n\n# User Custom Rules\n${appendRule.trim()}`;
+            this.logService.info(`[ClaudeSdkService] 已注入追加规则 (${appendRule.trim().length} chars)`);
+        }
+
+        return prompt;
     }
 
     /**
