@@ -29,13 +29,18 @@
 
         <div class="form-group">
           <label class="form-label">API Key</label>
-          <input
-            type="password"
-            class="form-input"
-            v-model="apiKey"
-            :placeholder="apiKeyMasked ? '已配置: ' + apiKeyMasked : '输入 API Key...'"
-            @change="saveConfig"
-          />
+          <div class="input-with-action">
+            <input
+              :type="showApiKey ? 'text' : 'password'"
+              class="form-input"
+              v-model="apiKey"
+              :placeholder="apiKeyMasked ? '已配置: ' + apiKeyMasked : '输入 API Key...'"
+              @change="saveConfig"
+            />
+            <button class="input-action-btn" @click="showApiKey = !showApiKey" :title="showApiKey ? '隐藏' : '显示'">
+              <span class="codicon" :class="showApiKey ? 'codicon-eye-closed' : 'codicon-eye'"></span>
+            </button>
+          </div>
           <span v-if="apiKeyMasked && !apiKey" class="form-hint">已保存，输入新值可覆盖</span>
         </div>
 
@@ -92,21 +97,6 @@
               <span class="codicon codicon-trash"></span>
             </button>
           </div>
-        </div>
-      </section>
-
-      <!-- 额外请求头 -->
-      <section class="settings-section">
-        <h3 class="section-title">额外请求头（可选）</h3>
-        <div class="form-group">
-          <textarea
-            class="form-textarea"
-            v-model="extraHeadersText"
-            placeholder='{"X-Custom-Header": "value"}'
-            rows="3"
-            @change="saveConfig"
-          ></textarea>
-          <span class="form-hint">JSON 格式的自定义请求头</span>
         </div>
       </section>
 
@@ -171,6 +161,7 @@ if (!runtime) throw new Error('[SettingsPage] runtime not provided')
 const provider = ref('openai')
 const apiKey = ref('')
 const apiKeyMasked = ref('')
+const showApiKey = ref(false)
 const baseUrl = ref('')
 const customModels = ref<Array<{ id: string; label: string; description?: string }>>([])
 const extraHeadersText = ref('')
@@ -470,6 +461,33 @@ onMounted(() => {
 .form-select:focus,
 .form-textarea:focus,
 .form-input-sm:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.input-with-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-with-action .form-input {
+  flex: 1;
+}
+
+.input-action-btn {
+  background: none;
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 3px;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  padding: 5px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-action-btn:hover {
+  color: var(--vscode-foreground);
   border-color: var(--vscode-focusBorder);
 }
 
