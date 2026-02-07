@@ -471,7 +471,25 @@ function handlePaste(event: ClipboardEvent) {
   const plainText = clipboard.getData('text/plain')
   if (plainText && clipboard.types.includes('text/html')) {
     event.preventDefault()
-    document.execCommand('insertText', false, plainText)
+    // 使用 Selection API 插入纯文本（避免 execCommand 已废弃的问题）
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0)
+      range.deleteContents()
+      const textNode = document.createTextNode(plainText)
+      range.insertNode(textNode)
+      // 移动光标到插入文本末尾
+      range.setStartAfter(textNode)
+      range.setEndAfter(textNode)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
+    // 同步 content.value
+    if (textareaRef.value) {
+      content.value = textareaRef.value.textContent || ''
+      emit('input', content.value)
+    }
+    autoResizeTextarea()
   }
 }
 
