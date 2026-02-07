@@ -607,62 +607,114 @@ function isImageDrop(event: DragEvent): boolean {
 }
 
 function handleDragOver(event: DragEvent) {
-  // 图片拖拽：不需要 Shift
-  if (isImageDrop(event)) {
+  // 图片拖拽 / 文件拖拽：统一拦截
+  if (isImageDrop(event) || isFileDrop(event)) {
     event.preventDefault()
     return
   }
-  // 文件路径拖拽：仅在按住 Shift 时拦截
-  if (!event.shiftKey) return
-  if (!isFileDrop(event)) return
+}
 
-  event.preventDefault()
+function extractAbsolutePathsFromDataTransfer(dataTransfer: DataTransfer): string[] {
+  const paths: string[] = []
+
+  // 1. 从 files 获取完整路径（外部拖拽有 file.path）
+  const files = Array.from(dataTransfer.files || [])
+  for (const file of files) {
+    const fileWithPath = file as File & { path?: string }
+    if (fileWithPath.path) {
+      paths.push(fileWithPath.path)
+    }
+  }
+  if (paths.length > 0) return paths
+
+  // 2. 从 text/uri-list 获取路径
+  const uriList = dataTransfer.getData('text/uri-list')
+  if (uriList) {
+    const lines = uriList.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'))
+    for (const line of lines) {
+      try {
+        const url = new URL(line)
+        if (url.protocol === 'file:') {
+          let p = decodeURIComponent(url.pathname)
+          // Windows 路径处理
+          if (/^\/[A-Za-z]:/.test(p)) p = p.substring(1)
+          paths.push(p)
+        }
+      } catch {
+        // 非 URL 格式，跳过
+      }
+    }
+  }
+  if (paths.length > 0) return paths
+
+  // 3. 从 text/plain 回退
+  const textPlain = dataTransfer.getData('text/plain')
+  if (textPlain) {
+    const lines = textPlain.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+    for (const line of lines) {
+      // 只接受看起来像路径的文本
+      if (line.startsWith('/') || /^[A-Za-z]:\\/.test(line)) {
+        paths.push(line)
+      }
+    }
+  }
+
+  return paths
 }
 
 async function handleDrop(event: DragEvent) {
   const dataTransfer = event.dataTransfer
   if (!dataTransfer) return
 
-  // 图片拖拽（不需要 Shift）：作为附件添加
-  if (!event.shiftKey && isImageDrop(event)) {
-    event.preventDefault()
-    const imageFiles: File[] = []
-    for (const item of Array.from(dataTransfer.items || [])) {
-      if (item.kind === 'file' && item.type.startsWith('image/')) {
-        const file = item.getAsFile()
-        if (file) imageFiles.push(file)
-      }
-    }
-    if (imageFiles.length > 0) {
-      const dt = new DataTransfer()
-      for (const f of imageFiles) dt.items.add(f)
-      handleAddFiles(dt.files)
-    }
+  event.preventDefault()
+  event.stopPropagation()
+
+  // 分离图片和非图片文件
+  const files = Array.from(dataTransfer.files || [])
+  const imageFiles = files.filter(f => f.type.startsWith('image/'))
+  const nonImageFiles = files.filter(f => !f.type.startsWith('image/'))
+
+  // 图片文件：作为附件添加
+  if (imageFiles.length > 0) {
+    const dt = new DataTransfer()
+    for (const f of imageFiles) dt.items.add(f)
+    handleAddFiles(dt.files)
+    // 如果只有图片，直接返回
+    if (nonImageFiles.length === 0 && !dataTransfer.getData('text/uri-list')) return
+  }
+
+  // Shift + 拖拽：使用 @mention（工作区相对路径）
+  if (event.shiftKey && isFileDrop(event)) {
+    const paths = extractFilePathsFromDataTransfer(dataTransfer)
+    if (paths.length === 0) return
+
+    const types = await statPaths(paths)
+
+    const mentionText = paths
+      .map(p => {
+        const t = types[p]
+        const isDir = t === 'directory'
+        const normalized = isDir && !p.endsWith('/') ? `${p}/` : p
+        return `@${normalized}`
+      })
+      .join(' ')
+
+    insertTextToInput(mentionText)
     return
   }
 
-  // 按住 Shift 时，将资源管理器文件拖入视为"插入路径"
-  if (!event.shiftKey) return
-  if (!isFileDrop(event)) return
+  // 非图片文件拖拽（无 Shift）：插入完整绝对路径
+  const absolutePaths = extractAbsolutePathsFromDataTransfer(dataTransfer)
+  if (absolutePaths.length > 0) {
+    const pathText = absolutePaths.join(' ')
+    insertTextToInput(pathText)
+    return
+  }
+}
 
-  event.preventDefault()
-
-  const paths = extractFilePathsFromDataTransfer(dataTransfer)
-  if (paths.length === 0) return
-
-  const types = await statPaths(paths)
-
-  const mentionText = paths
-    .map(p => {
-      const t = types[p]
-      const isDir = t === 'directory'
-      const normalized = isDir && !p.endsWith('/') ? `${p}/` : p
-      return `@${normalized}`
-    })
-    .join(' ')
-
+function insertTextToInput(text: string) {
   const baseContent = content.value.trimEnd()
-  const updatedContent = baseContent ? `${baseContent} ${mentionText} ` : `${mentionText} `
+  const updatedContent = baseContent ? `${baseContent} ${text} ` : `${text} `
 
   content.value = updatedContent
 
