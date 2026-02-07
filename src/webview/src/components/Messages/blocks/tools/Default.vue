@@ -44,7 +44,7 @@ const props = defineProps<Props>();
 
 // 工具名称
 const toolName = computed(() => {
-  return props.toolUse?.name || 'Unknown Tool';
+  return props.toolUse?.name || '未知工具';
 });
 
 // 获取输入参数

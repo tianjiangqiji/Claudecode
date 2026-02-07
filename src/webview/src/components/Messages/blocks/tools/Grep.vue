@@ -5,7 +5,7 @@
     :tool-result="toolResult"
   >
     <template #main>
-      <span class="tool-label">Grep</span>
+      <span class="tool-label">搜索内容</span>
       <code v-if="pattern" class="pattern-text">{{ pattern }}</code>
     </template>
 

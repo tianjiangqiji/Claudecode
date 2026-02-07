@@ -7,7 +7,7 @@
     :class="{ 'has-diff-view': hasDiffView }"
   >
     <template #main>
-      <span class="tool-label">Edit</span>
+      <span class="tool-label">编辑</span>
       <ToolFilePath v-if="filePath" :file-path="filePath" :context="context" />
       <span v-if="diffStats" class="diff-stats">
         <span v-if="diffStats.added > 0" class="stat-add">+{{ diffStats.added }}</span>

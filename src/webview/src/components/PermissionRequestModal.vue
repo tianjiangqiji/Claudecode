@@ -7,7 +7,7 @@
   >
     <div class="permission-request-content">
       <div class="permission-request-header">
-        Do you want to proceed with <strong>{{ request.toolName }}</strong>?
+        确认执行 <strong>{{ request.toolName }}</strong> 吗？
       </div>
 
       <!-- 工具特定的权限 UI（预留扩展点） -->
@@ -23,7 +23,7 @@
       <div v-if="hasInputs" class="permission-request-description">
         <details>
           <summary>
-            <span>Details</span>
+            <span>详情</span>
             <svg
               class="chevron"
               width="12"
@@ -48,18 +48,18 @@
 
     <div class="button-container">
       <button class="button primary" @click="handleApprove">
-        <span class="shortcut-num">1</span> Yes
+        <span class="shortcut-num">1</span> 是
       </button>
       <button v-if="showSecondButton" class="button" @click="handleApproveAndDontAsk">
-        <span class="shortcut-num">2</span> Yes, and don't ask again
+        <span class="shortcut-num">2</span> 是，不再询问
       </button>
       <button class="button" @click="handleReject">
-        <span class="shortcut-num">{{ showSecondButton ? '3' : '2' }}</span> No
+        <span class="shortcut-num">{{ showSecondButton ? '3' : '2' }}</span> 否
       </button>
       <input
         ref="inputRef"
         class="reject-message-input"
-        placeholder="Tell Claude what to do instead"
+        placeholder="告诉 AI 改为做什么..."
         v-model="rejectMessage"
         @keydown="handleKeyDown"
       />

@@ -24,20 +24,11 @@
   const SPINNER_ICONS = ['·', '✢', '*', '✶', '✻', '✽'];
   const ANIMATION_ICONS = [...SPINNER_ICONS, ...[...SPINNER_ICONS].reverse()];
   const VERBS = [
-    'Accomplishing', 'Actioning', 'Actualizing', 'Baking', 'Booping', 'Brewing',
-    'Calculating', 'Cerebrating', 'Channelling', 'Churning', 'Clauding', 'Coalescing',
-    'Cogitating', 'Computing', 'Combobulating', 'Concocting', 'Considering', 'Contemplating',
-    'Cooking', 'Crafting', 'Creating', 'Crunching', 'Deciphering', 'Deliberating',
-    'Determining', 'Discombobulating', 'Doing', 'Effecting', 'Elucidating', 'Enchanting',
-    'Envisioning', 'Finagling', 'Flibbertigibbeting', 'Forging', 'Forming', 'Frolicking',
-    'Generating', 'Germinating', 'Hatching', 'Herding', 'Honking', 'Ideating',
-    'Imagining', 'Incubating', 'Inferring', 'Manifesting', 'Marinating', 'Meandering',
-    'Moseying', 'Mulling', 'Mustering', 'Musing', 'Noodling', 'Percolating',
-    'Perusing', 'Philosophising', 'Pontificating', 'Pondering', 'Processing', 'Puttering',
-    'Puzzling', 'Reticulating', 'Ruminating', 'Scheming', 'Schlepping', 'Shimmying',
-    'Simmering', 'Smooshing', 'Spelunking', 'Spinning', 'Stewing', 'Sussing',
-    'Synthesizing', 'Thinking', 'Tinkering', 'Transmuting', 'Unfurling', 'Unravelling',
-    'Vibing', 'Wandering', 'Whirring', 'Wibbling', 'Working', 'Wrangling'
+    '思考中', '推理中', '分析中', '计算中', '构思中', '酝酿中',
+    '编织中', '创造中', '探索中', '生成中', '处理中', '解析中',
+    '组装中', '规划中', '沉思中', '琢磨中', '斟酌中', '领悟中',
+    '运算中', '编排中', '铸造中', '凝聚中', '演绎中', '推演中',
+    '谋划中', '冥想中', '参悟中', '钻研中', '锤炼中', '打磨中',
   ];
   const MAX_VERB_LENGTH = Math.max(...VERBS.map(v => v.length));
 

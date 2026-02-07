@@ -1,116 +1,243 @@
-# Claudix
+# Claudecode - AI 智能编程助手
 
-English | [简体中文](README_CN.md)
+<p align="center">
+  <img src="resources/claude-logo.png" alt="Claudecode Logo" width="128" height="128">
+</p>
 
-![VS Code Extension](https://img.shields.io/badge/VS%20Code-Extension-blue?logo=visual-studio-code)
-![Built with TypeScript](https://img.shields.io/badge/Built%20with-TypeScript-blue?logo=typescript)
-![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
+<p align="center">
+  <strong>多协议 AI 智能编程助手 — 在 VSCode 中与 AI 实时协作编程</strong>
+</p>
 
-[![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge.svg)](https://github.com/hesreallyhim/awesome-claude-code)
-![Powered by Claude Agent SDK](https://img.shields.io/badge/Powered%20by-Claude%20Agent%20SDK-orange)
+<p align="center">
+  <a href="https://github.com/crispvibe/Claudecode"><img src="https://img.shields.io/github/stars/crispvibe/Claudecode?style=flat-square&logo=github" alt="GitHub Stars"></a>
+  <img src="https://img.shields.io/badge/VS%20Code-%3E%3D1.98.0-blue?style=flat-square&logo=visual-studio-code" alt="VS Code">
+  <img src="https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat-square&logo=vue.js" alt="Vue 3">
+  <img src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square" alt="License">
+</p>
 
-A VSCode extension that brings Claude Code directly into your editor.
+<p align="center">
+  <a href="#功能特性">功能特性</a> •
+  <a href="#快速开始">快速开始</a> •
+  <a href="#支持的-ai-服务">AI 服务</a> •
+  <a href="#配置说明">配置说明</a> •
+  <a href="#开发指南">开发指南</a> •
+  <a href="#鸣谢">鸣谢</a>
+</p>
 
-## Overview
+---
 
-Claude Code integrates Claude AI into VSCode, providing an interactive coding assistant with conversation history, tool integration, and intelligent code understanding.
+## 简介
 
-## Features
+Claudecode 是一个功能强大的 VSCode 扩展，将多种 AI 大语言模型直接集成到你的编辑器中。它提供了交互式聊天界面、智能代码分析、文件操作、终端命令执行等丰富功能，让 AI 成为你真正的编程搭档。
 
-- Interactive chat interface with Claude Code
-- Session management and conversation history
-- Intelligent file operations and code analysis
-- Terminal command execution
-- Permission-based tool access
-- Support for multiple Claude models
-- Real-time streaming responses
-- Syntax highlighting and markdown rendering
+与其他 AI 编程助手不同，Claudecode 支持**多协议多服务商**接入，你可以自由选择 Claude Code SDK、OpenAI、Anthropic、Gemini 等不同的 AI 服务，甚至接入任何 OpenAI API 兼容的第三方服务。
 
-## Installation
+<p align="center">
+  <img src="resources/screenshot-chat.png" alt="Claudecode 聊天界面" width="400">
+  <br>
+  <em>Claudecode 聊天界面 — 侧边栏中与 AI 实时对话</em>
+</p>
+
+## 功能特性
+
+### 多协议 AI 支持
+
+- **Claude Code SDK** — 原生集成 Claude Code CLI，获得最佳的代码理解和工具调用体验
+- **OpenAI 兼容** — 支持 `/v1/chat/completions` 协议，兼容 OpenAI、DeepSeek、通义千问、Moonshot 等所有兼容服务
+- **Anthropic 直连** — 支持 `/v1/messages` 协议，直接调用 Anthropic API
+- **Gemini** — 支持 `/v1beta/models` 协议，接入 Google Gemini 系列模型
+
+### 智能编程助手
+
+- **交互式聊天** — 侧边栏聊天界面，支持 Markdown 渲染、代码高亮、LaTeX 公式
+- **会话管理** — 多会话支持、历史记录、会话恢复，不丢失任何对话上下文
+- **流式响应** — 实时流式输出，即时看到 AI 的思考过程
+
+### 强大的工具集成
+
+- **文件读写** — 智能读取、创建、编辑代码文件，支持差异对比预览
+- **批量编辑** — 一次性修改多个文件的多个位置
+- **终端命令** — 在编辑器中直接执行终端命令，支持后台运行
+- **内容搜索** — Grep 内容搜索和 Glob 文件查找
+- **网页搜索** — 搜索互联网获取最新信息
+- **笔记本编辑** — 支持 Jupyter Notebook 编辑
+- **MCP 工具** — 支持 Model Context Protocol 扩展工具
+
+### 安全与控制
+
+- **三种操作模式** — Normal（需确认）、Agent（自动执行编辑）、Plan（仅规划不执行）
+- **权限审批** — 敏感操作需用户明确授权，保障代码安全
+- **工具调用透明** — 所有 AI 工具调用过程完全可见
+
+### 用户体验
+
+- **完全中文界面** — 所有 UI 元素均已中文本地化
+- **自定义模型** — 支持添加任意自定义模型 ID 和显示名称
+- **插件内配置** — 无需离开编辑器，在插件设置页面完成所有配置
+- **智能滚动** — 查看历史消息时不会被新消息打断
+
+## 支持的 AI 服务
+
+| Provider | 协议 | 流式支持 | 说明 |
+|----------|------|:--------:|------|
+| **Claude Code** | SDK 原生 | ✅ | 通过 Claude Code CLI 二进制文件通信，支持完整工具链 |
+| **OpenAI** | `/v1/chat/completions` | ✅ | 兼容所有 OpenAI API 格式的服务（含第三方） |
+| **Anthropic** | `/v1/messages` | ✅ | Anthropic API 直连，支持 Claude 系列模型 |
+| **Gemini** | `/v1beta/models` | ✅ | Google Gemini API，支持 Gemini 系列模型 |
+
+> **提示**：通过 OpenAI 兼容协议，你可以接入 DeepSeek、通义千问、Moonshot、零一万物、Groq、Together AI 等任何支持 OpenAI API 格式的服务。
+
+## 快速开始
+
+### 从源码安装
 
 ```bash
-# Install dependencies
+# 克隆仓库
+git clone https://github.com/crispvibe/Claudecode.git
+cd Claudecode
+
+# 安装依赖
 pnpm install
 
-# Build the extension
+# 构建扩展
 pnpm build
 
-# Package as VSIX
+# 打包为 VSIX
 pnpm package
 ```
 
-Install the generated `.vsix` file in VSCode through Extensions > Install from VSIX.
+在 VSCode 中通过 **扩展 → 从 VSIX 安装** 来安装生成的 `.vsix` 文件。
 
-## Development
+### 首次配置
 
-### Running in Development Mode
+1. 安装后，点击左侧活动栏的 Claudecode 图标打开侧边栏
+2. 点击右上角 ⚙️ 齿轮图标进入设置页面
+3. 选择 AI 服务提供商（Provider）
+4. 填入 API Key 和 Base URL（如需要）
+5. 添加自定义模型（可选）
+6. 返回聊天页面，开始与 AI 对话
 
-Start the development server with hot module replacement:
+## 配置说明
+
+### Provider 配置
+
+在插件内置设置页面中可配置：
+
+| 配置项 | 说明 | 示例 |
+|--------|------|------|
+| **Provider 类型** | 选择 AI 服务提供商 | `openai` / `anthropic` / `gemini` / `claude-code` |
+| **API Key** | 对应 Provider 的 API 密钥 | `sk-xxxx...` |
+| **Base URL** | 自定义 API 端点 | `https://api.deepseek.com` |
+| **默认模型** | 默认使用的模型 ID | `deepseek-chat` |
+| **自定义模型** | 添加自定义模型 ID 和显示名称 | ID: `gpt-4o`, 名称: `GPT-4o` |
+| **额外请求头** | JSON 格式的自定义 HTTP 请求头 | `{"X-Custom": "value"}` |
+
+### 接入第三方服务示例
+
+**DeepSeek：**
+- Provider: `openai`
+- Base URL: `https://api.deepseek.com`
+- 自定义模型: `deepseek-chat` / `deepseek-reasoner`
+
+**通义千问：**
+- Provider: `openai`
+- Base URL: `https://dashscope.aliyuncs.com/compatible-mode`
+- 自定义模型: `qwen-plus` / `qwen-max`
+
+**Moonshot（Kimi）：**
+- Provider: `openai`
+- Base URL: `https://api.moonshot.cn`
+- 自定义模型: `moonshot-v1-128k`
+
+## 项目架构
+
+```
+Claudecode/
+├── src/
+│   ├── services/              # 后端服务层
+│   │   ├── claude/            # Claude Agent 服务（消息路由、会话管理）
+│   │   └── llm/               # LLM Provider 抽象层
+│   │       ├── providers/     # 各 Provider 实现（OpenAI/Anthropic/Gemini）
+│   │       ├── ILLMProvider.ts # Provider 接口定义
+│   │       └── LLMProviderService.ts  # Provider 管理服务
+│   └── webview/               # 前端 WebView（Vue 3）
+│       └── src/
+│           ├── components/    # UI 组件（聊天、消息、工具渲染）
+│           ├── pages/         # 页面（ChatPage、SettingsPage）
+│           ├── core/          # 核心逻辑（Session、Connection）
+│           └── composables/   # Vue 组合式函数
+├── resources/                 # 静态资源（图标、SVG）
+├── package.json               # 扩展配置
+└── esbuild.ts                 # 构建脚本
+```
+
+### 技术栈
+
+- **后端**：TypeScript + VSCode Extension API + esbuild
+- **前端**：Vue 3 + Vite + TailwindCSS
+- **通信**：WebView 消息协议（双向异步）
+- **AI SDK**：Claude Agent SDK + 自研 HTTP Provider 适配层
+
+## 开发指南
+
+### 环境要求
+
+- Node.js >= 18.0.0
+- pnpm >= 8.0
+- VSCode >= 1.98.0
+
+### 开发模式
 
 ```bash
+# 启动热更新开发服务器
 pnpm dev
 ```
 
-This will concurrently start:
-- Vite dev server (port 5173) for the webview
-- esbuild watcher for the extension
+将同时启动：
+- **Vite 开发服务器**（端口 5173）— WebView 前端热更新
+- **esbuild 监视器** — 扩展后端实时编译
 
-### Debugging
+### 调试
 
-Open the project in VSCode and use the debugging configurations:
+- **F5 运行扩展** — 完整构建后启动调试
+- **Run Extension (HMR)** — 前端热更新模式，快速迭代
 
-#### Run Extension
-Full build mode without HMR. The extension will be built from scratch before launching.
-
-- Press `F5` or select "Run Extension" from the debug panel
-- Suitable for production-like testing
-
-#### Run Extension (HMR)
-Development mode with hot module replacement for the webview.
-
-- Select "Run Extension (HMR)" from the debug panel
-- Webview changes will reload automatically without restarting the extension
-- Faster iteration during development
-
-### Build Commands
+### 构建命令
 
 ```bash
-# Build everything
-pnpm build
-
-# Build extension only
-pnpm build:extension
-
-# Build webview only
-pnpm build:webview
-
-# Run tests
-pnpm test
-
-# Type checking
-pnpm typecheck:all
+pnpm build              # 构建全部（前端 + 后端）
+pnpm build:extension    # 仅构建后端
+pnpm build:webview      # 仅构建前端
+pnpm package            # 打包为 VSIX
+pnpm test               # 运行测试
+pnpm typecheck:all      # TypeScript 类型检查
 ```
 
-## Usage
+## 贡献指南
 
-1. Open the Claude Code sidebar from the activity bar
-2. Start a new conversation or continue from history
-3. Ask questions, request code changes, or get help with your project
-4. Review and approve tool operations when prompted
+欢迎提交 Issue 和 Pull Request！
 
-## Requirements
+1. Fork 本仓库
+2. 创建特性分支：`git checkout -b feature/your-feature`
+3. 提交更改：`git commit -m 'Add your feature'`
+4. 推送分支：`git push origin feature/your-feature`
+5. 提交 Pull Request
 
-- VSCode >= 1.98.0
-- Node.js >= 18.0.0
+## 鸣谢
 
-## Contributing
+本项目基于 [Claudix](https://github.com/Haleclipse/Claudix) 开源项目二次开发。
 
-Contributions are welcome! If you would like to contribute to this project, please open an issue first to discuss your ideas or proposed changes.
+感谢原作者 [Haleclipse](https://github.com/Haleclipse) 的杰出工作和开源精神，为本项目奠定了坚实的基础。
 
-## License
+## 许可证
 
-AGPL-3.0
+本项目采用 [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) 许可证。
 
-## Star History
+基于 [Claudix](https://github.com/Haleclipse/Claudix) © Haleclipse | AGPL-3.0
 
-[![Star History](https://api.star-history.com/svg?repos=Haleclipse/Claudix&type=date&legend=top-left)](https://www.star-history.com/#Haleclipse/Claudix&type=date&legend=top-left)
+---
+
+<p align="center">
+  <sub>Made with ❤️ by <a href="https://github.com/crispvibe">Anna</a></sub>
+</p>

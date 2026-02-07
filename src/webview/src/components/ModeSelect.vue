@@ -19,7 +19,7 @@
       <DropdownItem
         :item="{
           id: 'default',
-          label: 'Default',
+          label: 'Normal',
           icon: 'codicon-chat text-[14px]!',
           checked: permissionMode === 'default',
           type: 'default-mode'
@@ -83,9 +83,9 @@ const selectedModeLabel = computed(() => {
     case 'plan':
       return 'Plan'
     case 'default':
-      return 'Default'
+      return 'Normal'
     default:
-      return 'Default'
+      return 'Normal'
   }
 })
 

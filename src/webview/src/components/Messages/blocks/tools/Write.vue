@@ -7,11 +7,11 @@
     :class="{ 'has-content-view': hasContentView }"
   >
     <template #main>
-      <span class="tool-label">Write</span>
+      <span class="tool-label">写入</span>
       <ToolFilePath v-if="filePath" :file-path="filePath" :context="context" />
       <span v-if="contentStats" class="content-stats">
-        <span class="stat-lines">{{ contentStats.lines }} Lines </span>
-        <span class="stat-chars">{{ contentStats.chars }} Chars </span>
+        <span class="stat-lines">{{ contentStats.lines }} 行 </span>
+        <span class="stat-chars">{{ contentStats.chars }} 字符 </span>
       </span>
     </template>
 

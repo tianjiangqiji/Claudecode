@@ -20,7 +20,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const label = computed(() => {
-  return props.message.is_error ? 'Error' : 'Completed';
+  return props.message.is_error ? '错误' : '已完成';
 });
 
 const content = computed(() => {

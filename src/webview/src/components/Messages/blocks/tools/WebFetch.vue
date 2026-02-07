@@ -5,7 +5,7 @@
     :default-expanded="shouldExpand"
   >
     <template #main>
-      <span class="tool-label">Fetch</span>
+      <span class="tool-label">网页获取</span>
       <a v-if="url" :href="url" target="_blank" class="url-link" @click.stop>
         {{ displayUrl }}
       </a>

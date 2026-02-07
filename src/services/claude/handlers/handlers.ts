@@ -104,11 +104,41 @@ export async function handleGetClaudeState(
     _request: GetClaudeStateRequest,
     context: HandlerContext
 ): Promise<GetClaudeStateResponse> {
-    const { logService } = context;
+    const { logService, llmProviderService } = context;
 
     logService.info('[handleGetClaudeState] 获取 Claude 状态');
 
-    const config = await loadConfig(context);
+    let config: any;
+
+    // 如果使用 Claude Code SDK 模式，使用原始 loadConfig
+    const providerType = llmProviderService?.getActiveProviderType() || 'claude-code';
+
+    if (providerType === 'claude-code') {
+        try {
+            config = await loadConfig(context);
+        } catch (e) {
+            logService.warn(`[handleGetClaudeState] loadConfig 失败: ${e}`);
+            config = { slashCommands: [], models: [], accountInfo: null };
+        }
+    } else {
+        // HTTP API Provider 模式：从 LLMProviderService 获取模型列表
+        const models = llmProviderService?.getAvailableModels() || [];
+        config = {
+            slashCommands: [],
+            models: models.map(m => ({
+                value: m.id,
+                label: m.label,
+                description: m.description,
+                provider: m.provider,
+            })),
+            accountInfo: null,
+        };
+    }
+
+    // 注入 Provider 信息
+    config.provider = providerType;
+    config.providerStatus = llmProviderService?.getStatus() || null;
+    config.allModels = llmProviderService?.getAllModels() || {};
 
     return {
         type: "get_claude_state_response",

@@ -4,7 +4,7 @@
     :tool-result="toolResult"
   >
     <template #main>
-      <span class="tool-label">Glob</span>
+      <span class="tool-label">查找文件</span>
       <code v-if="pattern" class="pattern-text">{{ pattern }}</code>
     </template>
 

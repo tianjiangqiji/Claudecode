@@ -15,7 +15,7 @@
       <div v-if="hasInput" class="mcp-section">
         <div class="section-header">
           <span class="codicon codicon-symbol-parameter"></span>
-          <span>Input</span>
+          <span>输入</span>
         </div>
         <pre class="json-content">{{ formattedInput }}</pre>
       </div>
@@ -24,7 +24,7 @@
       <div v-if="hasOutput" class="mcp-section">
         <div class="section-header">
           <span class="codicon codicon-output"></span>
-          <span>Output</span>
+          <span>输出</span>
         </div>
         <pre class="json-content">{{ formattedOutput }}</pre>
       </div>
@@ -33,7 +33,7 @@
       <div v-if="toolResult?.is_error" class="error-section">
         <div class="section-header">
           <span class="codicon codicon-error"></span>
-          <span>Error</span>
+          <span>错误</span>
         </div>
         <pre class="error-content">{{ errorMessage }}</pre>
       </div>

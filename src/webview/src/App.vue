@@ -16,10 +16,12 @@
             v-else-if="currentPage === 'chat'"
             key="chat"
             @switch-to-sessions="switchToPage('sessions')"
+            @switch-to-settings="switchToPage('settings')"
           />
           <SettingsPage
             v-else-if="currentPage === 'settings'"
             key="settings"
+            @back="switchToPage('chat')"
           />
           <!-- IconTestPage -->
           <!-- <IconTestPage
@@ -51,7 +53,7 @@ const currentPage = ref<PageName>(initialPage);
 const pageAnimation = ref({ opacity: 1, x: 0 });
 
 // 仅在需要的页面上初始化运行时（聊天 / 会话列表）
-const needsRuntime = initialPage === 'chat' || initialPage === 'sessions';
+const needsRuntime = initialPage === 'chat' || initialPage === 'sessions' || initialPage === 'settings';
 const runtime = needsRuntime ? useRuntime() : null;
 
 if (runtime) {
@@ -66,7 +68,7 @@ onMounted(() => {
   }
 });
 
-function switchToPage(page: 'sessions' | 'chat') {
+function switchToPage(page: PageName) {
   pageAnimation.value = { opacity: 0, x: 0 };
 
   setTimeout(() => {

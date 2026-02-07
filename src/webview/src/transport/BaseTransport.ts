@@ -224,6 +224,17 @@ export abstract class BaseTransport {
     /* no-op */
   }
 
+  /**
+   * 公开请求方法 - 供组件直接调用（如 SettingsPage）
+   */
+  async request<TResponse = any>(
+    request: WebViewRequest,
+    channelId?: string,
+    abortSignal?: AbortSignal
+  ): Promise<TResponse> {
+    return this.sendRequest<TResponse>(request, channelId, abortSignal);
+  }
+
   protected async sendRequest<TResponse = any>(
     request: WebViewRequest,
     channelId?: string,

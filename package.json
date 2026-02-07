@@ -1,9 +1,9 @@
 {
   "name": "claudix-vscode",
-  "displayName": "Claudix - Claude Code for VSCode",
-  "description": "Claude Code for VSCode. Bring the power of Claude AI assistant directly into your coding environment.",
+  "displayName": "Claudecode - AI 智能编程助手",
+  "description": "多协议 AI 智能编程助手，支持 Claude Code、OpenAI、Anthropic、Gemini 多种服务提供商。",
   "version": "0.3.9",
-  "publisher": "Haleclipse",
+  "publisher": "Anna",
   "engines": {
     "vscode": "^1.98.0",
     "node": ">=18.0.0"
@@ -19,12 +19,132 @@
   "main": "./dist/extension.cjs",
   "contributes": {
     "configuration": {
-      "title": "Claudix",
+      "title": "Claudecode 配置",
       "properties": {
         "claudix.selectedModel": {
           "type": "string",
           "default": "default",
-          "description": "The AI model for Claude Code"
+          "description": "当前选择的模型 ID"
+        },
+        "claudix.provider": {
+          "type": "string",
+          "default": "claude-code",
+          "enum": ["claude-code", "openai", "anthropic", "gemini"],
+          "enumDescriptions": [
+            "Claude Code SDK（原生模式，通过 CLI 二进制文件通信）",
+            "OpenAI 兼容协议（/v1/chat/completions）",
+            "Anthropic API 直连（/v1/messages）",
+            "Google Gemini API（/v1beta/models/...）"
+          ],
+          "description": "AI Provider 类型"
+        },
+        "claudix.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API Key（也支持兼容 API）"
+        },
+        "claudix.openaiBaseUrl": {
+          "type": "string",
+          "default": "https://api.openai.com",
+          "description": "OpenAI API Base URL（自定义端点/代理）"
+        },
+        "claudix.openaiDefaultModel": {
+          "type": "string",
+          "default": "gpt-4o",
+          "description": "OpenAI 默认模型 ID"
+        },
+        "claudix.openaiCustomModels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "description": "模型 ID（发送给 API）" },
+              "label": { "type": "string", "description": "显示名称" },
+              "description": { "type": "string", "description": "模型描述" },
+              "contextWindow": { "type": "number", "description": "上下文窗口大小" },
+              "maxOutputTokens": { "type": "number", "description": "最大输出 tokens" }
+            },
+            "required": ["id", "label"]
+          },
+          "default": [],
+          "description": "OpenAI 自定义模型列表"
+        },
+        "claudix.openaiExtraHeaders": {
+          "type": "object",
+          "default": {},
+          "description": "OpenAI 额外请求头"
+        },
+        "claudix.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API Key"
+        },
+        "claudix.anthropicBaseUrl": {
+          "type": "string",
+          "default": "https://api.anthropic.com",
+          "description": "Anthropic API Base URL"
+        },
+        "claudix.anthropicDefaultModel": {
+          "type": "string",
+          "default": "claude-sonnet-4-20250514",
+          "description": "Anthropic 默认模型 ID"
+        },
+        "claudix.anthropicCustomModels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "description": "模型 ID（发送给 API）" },
+              "label": { "type": "string", "description": "显示名称" },
+              "description": { "type": "string", "description": "模型描述" },
+              "contextWindow": { "type": "number", "description": "上下文窗口大小" },
+              "maxOutputTokens": { "type": "number", "description": "最大输出 tokens" }
+            },
+            "required": ["id", "label"]
+          },
+          "default": [],
+          "description": "Anthropic 自定义模型列表"
+        },
+        "claudix.anthropicExtraHeaders": {
+          "type": "object",
+          "default": {},
+          "description": "Anthropic 额外请求头"
+        },
+        "claudix.geminiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Google Gemini API Key"
+        },
+        "claudix.geminiBaseUrl": {
+          "type": "string",
+          "default": "https://generativelanguage.googleapis.com",
+          "description": "Gemini API Base URL"
+        },
+        "claudix.geminiDefaultModel": {
+          "type": "string",
+          "default": "gemini-2.5-pro",
+          "description": "Gemini 默认模型 ID"
+        },
+        "claudix.geminiCustomModels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "description": "模型 ID（发送给 API）" },
+              "label": { "type": "string", "description": "显示名称" },
+              "description": { "type": "string", "description": "模型描述" },
+              "contextWindow": { "type": "number", "description": "上下文窗口大小" },
+              "maxOutputTokens": { "type": "number", "description": "最大输出 tokens" }
+            },
+            "required": ["id", "label"]
+          },
+          "default": [],
+          "description": "Gemini 自定义模型列表"
+        },
+        "claudix.geminiExtraHeaders": {
+          "type": "object",
+          "default": {},
+          "description": "Gemini 额外请求头"
         },
         "claudix.environmentVariables": {
           "type": "array",
@@ -33,11 +153,11 @@
             "properties": {
               "name": {
                 "type": "string",
-                "description": "Environment variable name"
+                "description": "环境变量名称"
               },
               "value": {
                 "type": "string",
-                "description": "Environment variable value"
+                "description": "环境变量值"
               }
             },
             "required": [
@@ -46,7 +166,7 @@
             ]
           },
           "default": [],
-          "description": "Environment variables to set when launching Claude"
+          "description": "启动 AI 时设置的环境变量"
         }
       }
     },
@@ -54,7 +174,7 @@
       "activitybar": [
         {
           "id": "claudix-chat-sidebar",
-          "title": "Claudix",
+          "title": "Claudecode",
           "icon": "resources/claude-logo.svg"
         }
       ]
@@ -65,18 +185,18 @@
           "icon": "resources/claude-logo.svg",
           "type": "webview",
           "id": "claudix.chatView",
-          "name": "Claudix"
+          "name": "Claudecode"
         }
       ]
     },
     "commands": [
       {
         "command": "claudix.showChat",
-        "title": "Show Claudix"
+        "title": "显示 Claudecode"
       },
       {
         "command": "claudix.openSettings",
-        "title": "Claudix: Open Settings"
+        "title": "Claudecode: 打开设置"
       }
     ]
   },
@@ -149,7 +269,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Haleclipse/Claudix"
+    "url": "https://github.com/crispvibe/Claudecode"
   },
   "license": "AGPL-3.0"
 }

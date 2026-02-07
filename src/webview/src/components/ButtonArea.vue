@@ -29,8 +29,8 @@
           class="action-button think-button"
           :class="{ 'thinking-active': isThinkingOn }"
           @click="handleThinkingToggle"
-          :aria-label="isThinkingOn ? 'Thinking on' : 'Thinking off'"
-          :title="isThinkingOn ? 'Thinking on' : 'Thinking off'"
+          :aria-label="isThinkingOn ? '思考已开启' : '思考已关闭'"
+          :title="isThinkingOn ? '思考已开启' : '思考已关闭'"
         >
           <span class="codicon codicon-brain text-[16px]!" />
         </button>
@@ -39,7 +39,7 @@
         <DropdownTrigger
           ref="commandDropdownRef"
           :show-search="true"
-          search-placeholder="Filter commands..."
+          search-placeholder="搜索命令..."
           align="left"
           :selected-index="commandCompletion.activeIndex.value"
           :data-nav="commandCompletion.navigationMode.value"
@@ -51,7 +51,7 @@
           <template #trigger>
             <button
               class="action-button"
-              aria-label="Slash Commands"
+              aria-label="斜杠命令"
             >
               <span class="codicon codicon-italic text-[16px]!" />
             </button>
@@ -80,7 +80,7 @@
         <DropdownTrigger
           ref="mentionDropdownRef"
           :show-search="true"
-          search-placeholder="Search files..."
+          search-placeholder="搜索文件..."
           align="left"
           :selected-index="fileCompletion.activeIndex.value"
           :data-nav="fileCompletion.navigationMode.value"
@@ -92,7 +92,7 @@
           <template #trigger>
             <button
               class="action-button"
-              aria-label="Mention File"
+              aria-label="提及文件"
             >
               <span class="codicon codicon-mention text-[16px]!" />
             </button>
@@ -123,7 +123,7 @@
         <button
           class="action-button"
           @click="handleSparkleClick"
-          aria-label="Sparkle"
+          aria-label="智能提示"
         >
           <span class="codicon codicon-wand text-[16px]!" />
         </button>
@@ -132,7 +132,7 @@
         <button
           class="action-button"
           @click="handleAttachClick"
-          aria-label="Attach File"
+          aria-label="添加附件"
         >
           <span class="codicon codicon-attach text-[16px]!" />
           <input
@@ -150,7 +150,7 @@
           @click="handleSubmit"
           :disabled="submitVariant === 'disabled'"
           :data-variant="submitVariant"
-          :aria-label="submitVariant === 'stop' ? 'Stop Conversation' : 'Send Message'"
+          :aria-label="submitVariant === 'stop' ? '停止对话' : '发送消息'"
         >
           <span
             v-if="submitVariant === 'stop'"

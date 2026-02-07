@@ -5,7 +5,7 @@
         <button class="back-btn" @click="$emit('switchToChat')">
           <span class="codicon codicon-arrow-left"></span>
         </button>
-        <h2 class="page-title">Sessions</h2>
+        <h2 class="page-title">会话历史</h2>
       </div>
       <div class="header-center">
       </div>
@@ -32,7 +32,7 @@
         ref="searchInput"
         v-model="searchQuery"
         type="text"
-        placeholder="Search Agent/Chat Threads"
+        placeholder="搜索会话..."
         class="search-input"
         @keydown.escape="hideSearch"
       >
@@ -70,7 +70,7 @@
           @click="openSession(session)"
         >
             <div class="session-card-header">
-              <h3 class="session-title">{{ session.summary.value || 'New Conversation' }}</h3>
+              <h3 class="session-title">{{ session.summary.value || '新对话' }}</h3>
               <div class="session-date">{{ formatRelativeTime(session.lastModifiedTime.value) }}</div>
             </div>
 

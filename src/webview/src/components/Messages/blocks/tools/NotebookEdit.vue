@@ -5,7 +5,7 @@
     :default-expanded="shouldExpand"
   >
     <template #main>
-      <span class="tool-label">NotebookEdit</span>
+      <span class="tool-label">笔记本编辑</span>
       <ToolFilePath v-if="notebookPath" :file-path="notebookPath" :context="context" />
       <span v-if="editMode" class="mode-badge" :class="`mode-${editMode}`">{{ editMode }}</span>
     </template>

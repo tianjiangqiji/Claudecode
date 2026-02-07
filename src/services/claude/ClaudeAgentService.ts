@@ -28,6 +28,8 @@ import { IClaudeSessionService } from './ClaudeSessionService';
 import { AsyncStream, ITransport } from './transport';
 import { HandlerContext } from './handlers/types';
 import { IWebViewService } from '../webViewService';
+import { ILLMProviderService } from '../llm/ILLMProvider';
+import type { LLMQueryHandle } from '../llm/ILLMProvider';
 
 // 消息类型导入
 import type {
@@ -219,7 +221,8 @@ export class ClaudeAgentService implements IClaudeAgentService {
         @ITabsAndEditorsService private readonly tabsAndEditorsService: ITabsAndEditorsService,
         @IClaudeSdkService private readonly sdkService: IClaudeSdkService,
         @IClaudeSessionService private readonly sessionService: IClaudeSessionService,
-        @IWebViewService private readonly webViewService: IWebViewService
+        @IWebViewService private readonly webViewService: IWebViewService,
+        @ILLMProviderService private readonly llmProviderService: ILLMProviderService
     ) {
         // 构建 Handler 上下文
         this.handlerContext = {
@@ -234,6 +237,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             sdkService: this.sdkService,
             agentService: this,  // 自身引用
             webViewService: this.webViewService,
+            llmProviderService: this.llmProviderService,
         };
     }
 
@@ -521,15 +525,133 @@ export class ClaudeAgentService implements IClaudeAgentService {
         permissionMode: string,
         maxThinkingTokens: number
     ): Promise<Query> {
-        return this.sdkService.query({
-            inputStream,
-            resume,
-            canUseTool,
-            model,
-            cwd,
-            permissionMode,
-            maxThinkingTokens
-        });
+        const providerType = this.llmProviderService.getActiveProviderType();
+
+        // Claude Code SDK 模式：使用原生 SDK 流程
+        if (providerType === 'claude-code') {
+            this.logService.info(`[spawnClaude] 使用 Claude Code SDK 模式`);
+            return this.sdkService.query({
+                inputStream,
+                resume,
+                canUseTool,
+                model,
+                cwd,
+                permissionMode,
+                maxThinkingTokens
+            });
+        }
+
+        // HTTP API Provider 模式（OpenAI/Anthropic/Gemini）
+        this.logService.info(`[spawnClaude] 使用 ${providerType} HTTP API 模式`);
+        return this.spawnHTTPProvider(inputStream, model, cwd, maxThinkingTokens);
+    }
+
+    /**
+     * 使用 HTTP API Provider 启动会话
+     * 将 LLMQueryHandle 适配为 SDK Query 兼容对象
+     */
+    private async spawnHTTPProvider(
+        inputStream: AsyncStream<SDKUserMessage>,
+        model: string | null,
+        cwd: string,
+        maxThinkingTokens: number
+    ): Promise<Query> {
+        const providerConfig = this.llmProviderService.getProviderConfig();
+        const resolvedModel = model || providerConfig.defaultModel || '';
+
+        if (!resolvedModel) {
+            throw new Error('未指定模型，请在设置中配置默认模型');
+        }
+
+        // 创建一个 Query 兼容的异步迭代器适配器
+        const self = this;
+        let currentHandle: LLMQueryHandle | null = null;
+        let interrupted = false;
+
+        // 监听输入流，收到用户消息时发起查询
+        const outputStream = new AsyncStream<any>();
+
+        // 启动输入监听循环
+        (async () => {
+            try {
+                for await (const userMsg of inputStream) {
+                    if (interrupted) break;
+
+                    // 将 SDK 用户消息转换为 LLM 消息格式
+                    const content = userMsg.message?.content;
+                    let textContent = '';
+                    if (typeof content === 'string') {
+                        textContent = content;
+                    } else if (Array.isArray(content)) {
+                        textContent = content
+                            .filter((b: any) => b.type === 'text')
+                            .map((b: any) => b.text)
+                            .join('\n');
+                    }
+
+                    if (!textContent.trim()) continue;
+
+                    try {
+                        const handle = await self.llmProviderService.query({
+                            messages: [{ role: 'user', content: textContent }],
+                            model: resolvedModel,
+                            maxThinkingTokens: maxThinkingTokens > 0 ? maxThinkingTokens : undefined,
+                            stream: true,
+                            cwd,
+                        });
+                        currentHandle = handle;
+
+                        for await (const event of handle) {
+                            if (interrupted) break;
+                            outputStream.enqueue(event);
+                        }
+                    } catch (err: any) {
+                        outputStream.enqueue({
+                            type: 'result',
+                            subtype: 'error',
+                            error: err.message || String(err),
+                            is_error: true,
+                        });
+                    }
+                }
+            } catch (err) {
+                self.logService.error(`[spawnHTTPProvider] 输入流错误: ${err}`);
+            } finally {
+                outputStream.done();
+            }
+        })();
+
+        // 构造 Query 兼容对象
+        // 注意: AsyncStream 只允许迭代一次，必须提前获取迭代器引用
+        const outputIterator = outputStream[Symbol.asyncIterator]();
+        const queryLike: any = {
+            [Symbol.asyncIterator]() {
+                return outputIterator;
+            },
+            async interrupt() {
+                interrupted = true;
+                if (currentHandle) {
+                    await currentHandle.interrupt();
+                }
+            },
+            async return() {
+                interrupted = true;
+                outputStream.done();
+                return { value: undefined, done: true };
+            },
+            async setModel(m: string) {
+                // HTTP 模式下运行中切换模型仅更新后续查询
+                self.logService.info(`[HTTPProvider] setModel: ${m}`);
+            },
+            async setMaxThinkingTokens(tokens: number) {
+                maxThinkingTokens = tokens;
+            },
+            async setPermissionMode(_mode: any) {
+                // HTTP 模式下不支持权限模式
+            },
+        };
+
+        return queryLike as Query;
     }
 
     /**
@@ -703,6 +825,74 @@ export class ClaudeAgentService implements IClaudeAgentService {
 
             case "open_config_file":
                 return handleOpenConfigFile(request, this.handlerContext);
+
+            // Provider 配置
+            case "set_provider": {
+                const providerReq = request as any;
+                await this.llmProviderService.setActiveProvider(providerReq.provider);
+                const models = this.llmProviderService.getAvailableModels();
+                return {
+                    type: "set_provider_response",
+                    success: true,
+                    models: models.map(m => ({
+                        value: m.id,
+                        label: m.label,
+                        description: m.description,
+                        provider: m.provider,
+                    })),
+                };
+            }
+
+            case "update_provider_config": {
+                const configReq = request as any;
+                try {
+                    await this.llmProviderService.updateProviderConfig(configReq.config);
+                    return {
+                        type: "update_provider_config_response",
+                        success: true,
+                    };
+                } catch (err: any) {
+                    return {
+                        type: "update_provider_config_response",
+                        success: false,
+                        error: err.message || String(err),
+                    };
+                }
+            }
+
+            case "get_provider_status": {
+                const status = this.llmProviderService.getStatus();
+                const models = this.llmProviderService.getAvailableModels();
+                const allModels = this.llmProviderService.getAllModels();
+                return {
+                    type: "get_provider_status_response",
+                    provider: status.type,
+                    ready: status.ready,
+                    hasApiKey: status.hasApiKey,
+                    apiKeyMasked: status.apiKeyMasked,
+                    baseUrl: status.baseUrl,
+                    currentModel: status.currentModel,
+                    customModels: status.customModels,
+                    extraHeaders: status.extraHeaders,
+                    models: models.map(m => ({
+                        value: m.id,
+                        label: m.label,
+                        description: m.description,
+                        provider: m.provider,
+                    })),
+                    allModels: Object.fromEntries(
+                        Object.entries(allModels).map(([k, v]) => [
+                            k,
+                            v.map(m => ({
+                                value: m.id,
+                                label: m.label,
+                                description: m.description,
+                                provider: m.provider,
+                            })),
+                        ])
+                    ),
+                };
+            }
 
             // 会话管理
             case "list_sessions_request":

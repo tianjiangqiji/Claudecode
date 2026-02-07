@@ -209,6 +209,63 @@ export interface SetModelResponse {
 }
 
 /**
+ * 设置 Provider
+ */
+export interface SetProviderRequest {
+    type: "set_provider";
+    provider: string;
+}
+
+export interface SetProviderResponse {
+    type: "set_provider_response";
+    success: boolean;
+    models?: ModelOption[];
+    error?: string;
+}
+
+/**
+ * 更新 Provider 配置
+ */
+export interface UpdateProviderConfigRequest {
+    type: "update_provider_config";
+    config: {
+        apiKey?: string;
+        baseUrl?: string;
+        defaultModel?: string;
+        customModels?: Array<{
+            id: string;
+            label: string;
+            description?: string;
+        }>;
+        extraHeaders?: Record<string, string>;
+    };
+}
+
+export interface UpdateProviderConfigResponse {
+    type: "update_provider_config_response";
+    success: boolean;
+    error?: string;
+}
+
+/**
+ * 获取 Provider 状态
+ */
+export interface GetProviderStatusRequest {
+    type: "get_provider_status";
+}
+
+export interface GetProviderStatusResponse {
+    type: "get_provider_status_response";
+    provider: string;
+    ready: boolean;
+    hasApiKey: boolean;
+    baseUrl: string;
+    currentModel: string;
+    models: ModelOption[];
+    allModels: Record<string, ModelOption[]>;
+}
+
+/**
  * 设置 Thinking Level
  */
 export interface SetThinkingLevelRequest {
@@ -618,7 +675,10 @@ export type WebViewRequest =
     // | LoginRequest
     // | SubmitOAuthCodeRequest
     | OpenConfigFileRequest
-    | OpenClaudeInTerminalRequest;
+    | OpenClaudeInTerminalRequest
+    | SetProviderRequest
+    | UpdateProviderConfigRequest
+    | GetProviderStatusRequest;
 
 /**
  * Extension → WebView 的所有响应类型
@@ -648,7 +708,10 @@ export type WebViewRequestResponse =
     // | LoginResponse
     // | SubmitOAuthCodeResponse
     | OpenConfigFileResponse
-    | OpenClaudeInTerminalResponse;
+    | OpenClaudeInTerminalResponse
+    | SetProviderResponse
+    | UpdateProviderConfigResponse
+    | GetProviderStatusResponse;
 
 /**
  * Extension → WebView 的所有请求类型

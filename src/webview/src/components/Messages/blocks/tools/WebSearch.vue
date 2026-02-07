@@ -5,7 +5,7 @@
     :default-expanded="shouldExpand"
   >
     <template #main>
-      <span class="tool-label">Search</span>
+      <span class="tool-label">网页搜索</span>
       <span v-if="query" class="query-text">{{ query }}</span>
     </template>
 

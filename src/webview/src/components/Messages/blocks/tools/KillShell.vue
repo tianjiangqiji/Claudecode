@@ -5,11 +5,11 @@
     :default-expanded="shouldExpand"
   >
     <template #main>
-      <span class="tool-label">KillShell</span>
-      <span v-if="shellId" class="shell-id">Shell {{ shellId }}</span>
+      <span class="tool-label">终止进程</span>
+      <span v-if="shellId" class="shell-id">终端 {{ shellId }}</span>
       <span v-if="isSuccess" class="status-badge success">
         <span class="codicon codicon-check"></span>
-        killed
+        已终止
       </span>
     </template>
 

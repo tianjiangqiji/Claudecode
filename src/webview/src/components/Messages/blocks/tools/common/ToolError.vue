@@ -45,7 +45,7 @@ const errorContent = computed(() => {
   }
 
   // 4. 未知类型：返回默认错误消息
-  return 'Unknown error';
+  return '未知错误';
 });
 </script>
 

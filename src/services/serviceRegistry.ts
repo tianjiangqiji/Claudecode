@@ -24,6 +24,9 @@ import { IClaudeSdkService, ClaudeSdkService } from './claude/ClaudeSdkService';
 import { IClaudeSessionService, ClaudeSessionService } from './claude/ClaudeSessionService';
 import { IClaudeAgentService, ClaudeAgentService } from './claude/ClaudeAgentService';
 
+// LLM Provider service
+import { ILLMProviderService, LLMProviderService } from './llm/LLMProviderService';
+
 /**
  * Register all services to the builder
  *
@@ -58,6 +61,9 @@ export function registerServices(
 	// WebView service
 	builder.define(IWebViewService, new SyncDescriptor(WebViewService, [context]));
 
+	// LLM Provider service
+	builder.define(ILLMProviderService, new SyncDescriptor(LLMProviderService));
+
 	// Claude services
 	builder.define(IClaudeSdkService, new SyncDescriptor(ClaudeSdkService, [context]));
 	builder.define(IClaudeSessionService, new SyncDescriptor(ClaudeSessionService));
@@ -78,5 +84,6 @@ export {
 	IWebViewService,
 	IClaudeSdkService,
 	IClaudeSessionService,
-	IClaudeAgentService
+	IClaudeAgentService,
+	ILLMProviderService
 };

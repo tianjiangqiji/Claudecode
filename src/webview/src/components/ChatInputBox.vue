@@ -176,7 +176,7 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   showProgress: true,
   progressPercentage: 48.7,
-  placeholder: 'Plan, @ for context, / for commands...',
+  placeholder: '输入消息，@ 引用文件，/ 使用命令...',
   readonly: false,
   showSearch: false,
   selectedModel: 'claude-opus-4-5',

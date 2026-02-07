@@ -9,8 +9,11 @@
         <h2 class="chat-title">{{ title }}</h2>
       </div>
       <div class="header-right">
-        <button class="new-chat-btn" title="新开对话" @click="createNew">
+        <button class="new-chat-btn" title="新建对话" @click="createNew">
           <span class="codicon codicon-plus"></span>
+        </button>
+        <button class="new-chat-btn" title="设置" @click="$emit('switchToSettings')">
+          <span class="codicon codicon-settings-gear"></span>
         </button>
       </div>
     </div>
@@ -130,7 +133,7 @@
   });
 
   // 现在所有访问都使用 Vue Ref（.value）
-  const title = computed(() => session.value?.summary.value || 'New Conversation');
+  const title = computed(() => session.value?.summary.value || '新对话');
   const messages = computed<any[]>(() => session.value?.messages.value ?? []);
   const isBusy = computed(() => session.value?.busy.value ?? false);
   const permissionMode = computed(
@@ -171,6 +174,20 @@
   // 记录上次消息数量，用于判断是否需要滚动
   let prevCount = 0;
 
+  // 智能滚动：用户手动向上滚动时暂停自动滚动
+  const userScrolledUp = ref(false);
+
+  function isNearBottom(): boolean {
+    const el = containerEl.value;
+    if (!el) return true;
+    // 距离底部 80px 以内视为「在底部」
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }
+
+  function handleScroll(): void {
+    userScrolledUp.value = !isNearBottom();
+  }
+
   function stringify(m: any): string {
     try {
       return JSON.stringify(m ?? {}, null, 2);
@@ -179,7 +196,8 @@
     }
   }
 
-  function scrollToBottom(): void {
+  function scrollToBottom(force = false): void {
+    if (!force && userScrolledUp.value) return;
     const end = endEl.value;
     if (!end) return;
     requestAnimationFrame(() => {
@@ -190,10 +208,11 @@
   }
 
   watch(session, async () => {
-    // 切换会话：复位并滚动底部
+    // 切换会话：复位并强制滚动底部
     prevCount = 0;
+    userScrolledUp.value = false;
     await nextTick();
-    scrollToBottom();
+    scrollToBottom(true);
   });
 
   // moved above
@@ -219,11 +238,22 @@
   onMounted(async () => {
     prevCount = messages.value.length;
     await nextTick();
-    scrollToBottom();
+    scrollToBottom(true);
+
+    // 监听滚动事件
+    const el = containerEl.value;
+    if (el) {
+      el.addEventListener('scroll', handleScroll, { passive: true });
+    }
   });
 
   onUnmounted(() => {
     try { unregisterToggle?.(); } catch {}
+    // 移除滚动监听
+    const el = containerEl.value;
+    if (el) {
+      el.removeEventListener('scroll', handleScroll);
+    }
   });
 
   async function createNew(): Promise<void> {

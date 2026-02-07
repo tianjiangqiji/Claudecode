@@ -5,9 +5,9 @@
     :default-expanded="shouldExpand"
   >
     <template #main>
-      <span class="tool-label">Bash</span>
+      <span class="tool-label">终端命令</span>
       <span v-if="description" class="tool-description">{{ description }}</span>
-      <span v-if="runInBackground" class="bg-badge">background</span>
+      <span v-if="runInBackground" class="bg-badge">后台</span>
     </template>
 
     <template #expandable>
@@ -18,7 +18,7 @@
 
       <!-- 输出内容 (如果有) -->
       <div v-if="hasOutput" class="bash-output">
-        <div class="output-header">Output</div>
+        <div class="output-header">输出</div>
         <pre class="output-content">{{ outputContent }}</pre>
       </div>
 

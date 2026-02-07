@@ -5,7 +5,7 @@
     :default-expanded="shouldExpand"
   >
     <template #main>
-      <span class="tool-label">Task</span>
+      <span class="tool-label">子任务</span>
       <span v-if="subagentType" class="agent-badge">{{ subagentType }}</span>
       <span v-if="description" class="description-text">{{ description }}</span>
     </template>
