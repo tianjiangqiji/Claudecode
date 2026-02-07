@@ -147,9 +147,10 @@
         </div>
       </section>
 
-      <!-- 版本信息 -->
+      <!-- 版本信息 & 社区 -->
       <section class="settings-section">
         <div class="version-info">Claudecode v1.0.0</div>
+        <div class="community-info">Code 开源技术交流群：1076321843</div>
       </section>
     </div>
   </div>
@@ -632,5 +633,12 @@ onMounted(() => {
   color: var(--vscode-descriptionForeground);
   margin-top: 8px;
   opacity: 0.6;
+}
+
+.community-info {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 4px;
+  opacity: 0.7;
 }
 </style>
