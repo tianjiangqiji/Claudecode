@@ -64,10 +64,18 @@
               </button>
             </div>
             <div v-for="(msg, idx) in messageQueue" :key="idx" class="queue-item">
-              <span class="queue-text">{{ msg.length > 60 ? msg.slice(0, 60) + '...' : msg }}</span>
-              <button class="queue-remove-btn" @click="messageQueue.splice(idx, 1)" title="移除">
-                <span class="codicon codicon-close"></span>
-              </button>
+              <span class="queue-text" @click="editQueueMessage(idx)" title="点击编辑">{{ msg.length > 60 ? msg.slice(0, 60) + '...' : msg }}</span>
+              <div class="queue-actions">
+                <button v-if="idx > 0" class="queue-action-btn" @click="moveQueueMessage(idx, idx - 1)" title="上移">
+                  <span class="codicon codicon-chevron-up"></span>
+                </button>
+                <button v-if="idx < messageQueue.length - 1" class="queue-action-btn" @click="moveQueueMessage(idx, idx + 1)" title="下移">
+                  <span class="codicon codicon-chevron-down"></span>
+                </button>
+                <button class="queue-remove-btn" @click="messageQueue.splice(idx, 1)" title="移除">
+                  <span class="codicon codicon-close"></span>
+                </button>
+              </div>
             </div>
           </div>
           <PermissionRequestModal
@@ -78,6 +86,7 @@
             data-permission-panel="1"
           />
           <ChatInputBox
+            ref="chatInputBoxRef"
             :show-progress="true"
             :progress-percentage="progressPercentage"
             :conversation-working="isBusy"
@@ -316,6 +325,29 @@
     if (trimmed) {
       messageQueue.value.push(trimmed);
     }
+  }
+
+  // ChatInputBox ref
+  const chatInputBoxRef = ref<InstanceType<typeof ChatInputBox> | null>(null);
+
+  // 点击队列消息：取消排队，返回输入框编辑
+  function editQueueMessage(idx: number) {
+    const msg = messageQueue.value[idx];
+    if (!msg) return;
+    messageQueue.value.splice(idx, 1);
+    if (chatInputBoxRef.value) {
+      chatInputBoxRef.value.setContent(msg);
+      chatInputBoxRef.value.focus();
+    }
+  }
+
+  // 队列消息上下移动
+  function moveQueueMessage(from: number, to: number) {
+    if (to < 0 || to >= messageQueue.value.length) return;
+    const arr = [...messageQueue.value];
+    const [item] = arr.splice(from, 1);
+    arr.splice(to, 0, item);
+    messageQueue.value = arr;
   }
 
   // 从队列发送下一条消息（绕过 isBusy 检查，因为 watcher 已确认 busy=false）
@@ -681,6 +713,34 @@
     white-space: nowrap;
     flex: 1;
     min-width: 0;
+    cursor: pointer;
+  }
+
+  .queue-text:hover {
+    color: var(--vscode-textLink-foreground);
+    text-decoration: underline;
+  }
+
+  .queue-actions {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    flex-shrink: 0;
+  }
+
+  .queue-action-btn {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    padding: 1px 2px;
+    opacity: 0.4;
+    font-size: 12px;
+  }
+
+  .queue-action-btn:hover {
+    opacity: 1;
+    color: var(--vscode-foreground);
   }
 
   .queue-remove-btn {
