@@ -219,6 +219,19 @@ async function loadProviderStatus() {
   }
 }
 
+// 刷新 claudeConfig 信号（让 ModelSelect 等组件读到最新模型列表）
+async function refreshClaudeConfig() {
+  try {
+    const conn = await runtime!.connectionManager.get()
+    const claudeState = await (conn as any).request({ type: 'get_claude_state' }) as any
+    if (claudeState?.config) {
+      ;(conn as any).claudeConfig(claudeState.config)
+    }
+  } catch (e) {
+    console.error('[SettingsPage] 刷新 claudeConfig 失败:', e)
+  }
+}
+
 // 切换 Provider
 async function handleProviderChange() {
   try {
@@ -238,6 +251,8 @@ async function handleProviderChange() {
     if (response?.success) {
       // 重新加载完整状态（会回显新 Provider 的已保存配置）
       await loadProviderStatus()
+      // 刷新 claudeConfig 让聊天页模型选择器同步更新
+      await refreshClaudeConfig()
     }
   } catch (e) {
     console.error('[SettingsPage] 切换 Provider 失败:', e)
@@ -271,6 +286,8 @@ async function saveConfig() {
 
     // 刷新状态
     await loadProviderStatus()
+    // 刷新 claudeConfig 让聊天页模型选择器同步更新
+    await refreshClaudeConfig()
     saveStatus.value = 'saved'
 
     // 2秒后清除保存状态
