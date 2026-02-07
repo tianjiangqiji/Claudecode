@@ -464,6 +464,14 @@ function handlePaste(event: ClipboardEvent) {
     }
     // 触发附件添加
     handleAddFiles(dataTransfer.files)
+    return
+  }
+
+  // 过滤 HTML 格式：contenteditable 会粘贴带格式的 HTML，强制只粘贴纯文本
+  const plainText = clipboard.getData('text/plain')
+  if (plainText && clipboard.types.includes('text/html')) {
+    event.preventDefault()
+    document.execCommand('insertText', false, plainText)
   }
 }
 
