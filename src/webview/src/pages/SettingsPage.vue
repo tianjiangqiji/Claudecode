@@ -248,9 +248,7 @@ async function saveConfig() {
     const config: Record<string, any> = {}
     if (apiKey.value) config.apiKey = apiKey.value
     if (baseUrl.value) config.baseUrl = baseUrl.value
-    if (customModels.value.length > 0) {
-      config.customModels = JSON.parse(JSON.stringify(customModels.value))
-    }
+    config.customModels = JSON.parse(JSON.stringify(customModels.value))
     config.appendRule = appendRule.value
     config.appendRuleEnabled = appendRuleEnabled.value
 
