@@ -164,7 +164,6 @@ const apiKeyMasked = ref('')
 const showApiKey = ref(false)
 const baseUrl = ref('')
 const customModels = ref<Array<{ id: string; label: string; description?: string }>>([])
-const extraHeadersText = ref('')
 const appendRule = ref('')
 const appendRuleEnabled = ref(true)
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -199,13 +198,6 @@ async function loadProviderStatus() {
         customModels.value = []
       }
 
-      // 回显额外请求头
-      if (response.extraHeaders && typeof response.extraHeaders === 'object' && Object.keys(response.extraHeaders).length > 0) {
-        extraHeadersText.value = JSON.stringify(response.extraHeaders, null, 2)
-      } else {
-        extraHeadersText.value = ''
-      }
-
       // 回显追加规则
       if (response.appendRule !== undefined) {
         appendRule.value = response.appendRule || ''
@@ -229,7 +221,6 @@ async function handleProviderChange() {
     apiKeyMasked.value = ''
     baseUrl.value = ''
     customModels.value = []
-    extraHeadersText.value = ''
 
     const response = await (conn as any).request({
       type: 'set_provider',
@@ -252,15 +243,6 @@ async function saveConfig() {
     saveStatus.value = 'saving'
     const conn = await runtime!.connectionManager.get()
 
-    let extraHeaders: Record<string, string> = {}
-    if (extraHeadersText.value.trim()) {
-      try {
-        extraHeaders = JSON.parse(extraHeadersText.value)
-      } catch {
-        // 忽略无效 JSON
-      }
-    }
-
     // 只发送有值的字段，避免 undefined 覆盖后端已有配置
     // 深拷贝对象/数组，防止 Vue Proxy 序列化问题
     const config: Record<string, any> = {}
@@ -268,9 +250,6 @@ async function saveConfig() {
     if (baseUrl.value) config.baseUrl = baseUrl.value
     if (customModels.value.length > 0) {
       config.customModels = JSON.parse(JSON.stringify(customModels.value))
-    }
-    if (Object.keys(extraHeaders).length > 0) {
-      config.extraHeaders = JSON.parse(JSON.stringify(extraHeaders))
     }
     config.appendRule = appendRule.value
     config.appendRuleEnabled = appendRuleEnabled.value
