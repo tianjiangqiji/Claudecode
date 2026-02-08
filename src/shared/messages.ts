@@ -270,6 +270,7 @@ export interface GetProviderStatusResponse {
     defaultOpusModel?: string;
     defaultSonnetModel?: string;
     reasoningModel?: string;
+    builtInModels?: ModelOption[];
     customModels?: Array<{ id: string; label: string; description?: string }>;
     extraHeaders?: Record<string, string>;
     appendRule?: string;

@@ -73,10 +73,27 @@
               <h3 class="session-title">{{ session.summary.value || '新对话' }}</h3>
               <div class="session-actions">
                 <div class="session-date">{{ formatRelativeTime(session.lastModifiedTime.value) }}</div>
+                <template v-if="deletingSessionId === session.sessionId.value">
+                  <button
+                    class="session-delete-confirm-btn"
+                    title="确认删除"
+                    @click.stop="confirmDelete(session)"
+                  >
+                    <span class="codicon codicon-check"></span>
+                  </button>
+                  <button
+                    class="session-delete-cancel-btn"
+                    title="取消"
+                    @click.stop="cancelDelete"
+                  >
+                    <span class="codicon codicon-close"></span>
+                  </button>
+                </template>
                 <button
+                  v-else
                   class="session-delete-btn"
                   title="删除会话"
-                  @click.stop="deleteSession(session)"
+                  @click.stop="promptDelete(session)"
                 >
                   <span class="codicon codicon-trash"></span>
                 </button>
@@ -129,6 +146,7 @@ const error = ref('');
 const searchQuery = ref('');
 const showSearch = ref(false);
 const searchInput = ref<HTMLInputElement | null>(null);
+const deletingSessionId = ref<string | null>(null);
 
 
 // 计算属性：过滤和排序会话列表
@@ -173,16 +191,17 @@ const openSession = (wrappedSession: ReturnType<typeof useSession> | undefined) 
   emit('switchToChat', wrappedSession.sessionId.value);
 };
 
-const deleteSession = async (wrappedSession: ReturnType<typeof useSession> | undefined) => {
+const promptDelete = (wrappedSession: ReturnType<typeof useSession>) => {
+  deletingSessionId.value = wrappedSession.sessionId.value || null;
+};
+
+const cancelDelete = () => {
+  deletingSessionId.value = null;
+};
+
+const confirmDelete = async (wrappedSession: ReturnType<typeof useSession>) => {
   if (!wrappedSession?.sessionId.value) {return;}
   try {
-    const choice = await runtime.appContext.showNotification(
-      '确定删除该会话吗？此操作不可恢复。',
-      'warning',
-      ['删除', '取消'],
-      true
-    );
-    if (choice !== '删除') {return;}
     const success = await store.deleteSession(wrappedSession.sessionId.value);
     if (!success) {
       error.value = '删除会话失败';
@@ -191,6 +210,8 @@ const deleteSession = async (wrappedSession: ReturnType<typeof useSession> | und
   } catch (err) {
     error.value = `删除会话失败: ${err}`;
     await runtime.appContext.showNotification('删除会话失败', 'error');
+  } finally {
+    deletingSessionId.value = null;
   }
 };
 
@@ -521,6 +542,25 @@ onMounted(() => {
 
 .session-delete-btn:hover {
   color: var(--vscode-errorForeground);
+  background: var(--vscode-list-hoverBackground);
+}
+
+.session-delete-confirm-btn, .session-delete-cancel-btn {
+  border: none;
+  background: transparent;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.session-delete-confirm-btn:hover {
+  color: var(--vscode-testing-iconPassed);
+  background: var(--vscode-list-hoverBackground);
+}
+
+.session-delete-cancel-btn:hover {
+  color: var(--vscode-foreground);
   background: var(--vscode-list-hoverBackground);
 }
 

@@ -17,7 +17,7 @@
             <!-- 自定义图标内容（通过slot） -->
             <slot name="icon" :item="item">
               <!-- 默认图标渲染 -->
-              <i v-if="item.icon" :class="`codicon ${item.icon}`"></i>
+              <i v-if="computedIcon" :class="`codicon ${computedIcon}`"></i>
             </slot>
           </span>
 
@@ -73,7 +73,14 @@ const itemRef = ref<HTMLElement>()
 
 // 检查是否有图标
 const hasIcon = computed(() => {
-  return !!props.item.icon || !!slots.icon
+  return !!computedIcon.value || !!slots.icon
+})
+
+const computedIcon = computed(() => {
+  if (props.item.icon) {return props.item.icon}
+  if (props.item.provider === 'builtin') {return 'codicon-lock'}
+  if (props.item.provider === 'custom') {return 'codicon-beaker'}
+  return ''
 })
 
 // 注意：不在这里使用 scrollIntoView，因为 Dropdown 使用自定义 ScrollableElement

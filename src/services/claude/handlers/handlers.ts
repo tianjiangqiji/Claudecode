@@ -123,19 +123,45 @@ export async function handleGetClaudeState(
         config = { slashCommands: [], models: [], accountInfo: null };
     }
 
-    // 只使用自定义模型，隐藏 SDK 默认模型（default, opus, haiku, claude-sonnet-4-5-20250929）
+    // 1. 获取自定义模型
     const customModels = llmProviderService?.getAvailableModels() || [];
-    if (customModels.length > 0) {
-        const customModelEntries = customModels.map(m => ({
-            value: m.id,
-            label: m.label,
-            description: m.description,
-            provider: 'claude-code',
-        }));
-        config.models = customModelEntries;
-    } else {
-        config.models = [];
-    }
+    const customModelEntries = customModels.map(m => ({
+        value: m.id,
+        label: m.label,
+        description: m.description,
+        provider: 'claude-code',
+    }));
+
+    // 2. 获取内置模型 (Haiku, Sonnet, Opus, Reasoning)
+    // 这些模型对应 SettingsPage 中的 "Locked" 模型
+    const builtInDefaults = {
+        Haiku: 'claude-3-haiku-20240307',
+        Sonnet: 'claude-3-5-sonnet-20241022',
+        Opus: 'claude-3-opus-20240229',
+        Reasoning: 'claude-3-7-sonnet-20250219'
+    };
+
+    const builtInModels = [
+        { key: 'Haiku', config: 'defaultHaikuModel' },
+        { key: 'Sonnet', config: 'defaultSonnetModel' },
+        { key: 'Opus', config: 'defaultOpusModel' },
+        { key: 'Reasoning', config: 'reasoningModel' }
+    ].map(item => {
+        const configVal = context.configService.getValue<string>(`claudix.${item.config}`, '');
+        // 如果有配置值则使用配置值，否则使用硬编码的默认值（作为 fallback）
+        // 注意：SDK 可能会有不同的默认值，但这里为了让前端能选，必须给一个 ID
+        const id = configVal || (builtInDefaults as any)[item.key] || '';
+        
+        return {
+            value: id,
+            label: `Claude ${item.key}`,
+            description: configVal ? 'User Configured' : 'Built-in',
+            provider: 'anthropic'
+        };
+    });
+
+    // 合并模型列表：内置模型在前，自定义模型在后
+    config.models = [...builtInModels, ...customModelEntries];
 
     // 注入 Provider 信息
     config.provider = 'claude-code';

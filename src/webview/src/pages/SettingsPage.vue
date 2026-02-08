@@ -24,16 +24,18 @@
               :type="showApiKey ? 'text' : 'password'"
               class="form-input"
               v-model="apiKey"
-              :placeholder="apiKeyMasked ? '已配置: ' + apiKeyMasked : '留空使用本地 CLI 认证'"
+              :placeholder="apiKeyMasked ? '已配置: ' + apiKeyMasked : (sdkApiKeyMasked ? '默认值: ' + sdkApiKeyMasked : '留空使用本地 CLI 认证')"
               @change="saveConfig"
             />
             <button class="input-action-btn" @click="showApiKey = !showApiKey" :title="showApiKey ? '隐藏' : '显示'">
               <span class="codicon" :class="showApiKey ? 'codicon-eye-closed' : 'codicon-eye'"></span>
             </button>
+            <button v-if="apiKeyMasked" class="input-action-btn" @click="clearApiKey" title="清除配置">
+              <span class="codicon codicon-trash"></span>
+            </button>
           </div>
           <span v-if="apiKeyMasked && !apiKey" class="form-hint">已保存，输入新值可覆盖</span>
           <span v-else class="form-hint">设置后将作为 ANTHROPIC_API_KEY 注入 SDK</span>
-          <span v-if="sdkApiKeyMasked && !apiKey" class="form-hint">Claude Code 默认值: {{ sdkApiKeyMasked }}</span>
         </div>
 
         <div class="form-group">
@@ -42,11 +44,10 @@
             type="text"
             class="form-input"
             v-model="baseUrl"
-            placeholder="留空使用官方 API，填写自定义地址用于反代"
+            :placeholder="currentConfig.baseUrl ? '当前配置: ' + currentConfig.baseUrl : (sdkBaseUrl ? '默认值: ' + sdkBaseUrl : '留空使用官方 API，填写自定义地址用于反代')"
             @change="saveConfig"
           />
           <span class="form-hint">设置后将作为 ANTHROPIC_BASE_URL 注入 SDK</span>
-          <span v-if="sdkBaseUrl && !baseUrl" class="form-hint">Claude Code 默认值: {{ sdkBaseUrl }}</span>
         </div>
 
         <!-- 默认模型覆盖 -->
@@ -56,11 +57,10 @@
             type="text"
             class="form-input"
             v-model="defaultHaikuModel"
-            placeholder="如 claude-3-haiku-20240307"
+            :placeholder="currentConfig.defaultHaikuModel ? '当前配置: ' + currentConfig.defaultHaikuModel : (sdkDefaultHaikuModel ? '默认值: ' + sdkDefaultHaikuModel : '如 claude-3-haiku-20240307')"
             @change="saveConfig"
           />
           <span class="form-hint">注入 ANTHROPIC_DEFAULT_HAIKU_MODEL</span>
-          <span v-if="sdkDefaultHaikuModel && !defaultHaikuModel" class="form-hint">Claude Code 默认值: {{ sdkDefaultHaikuModel }}</span>
         </div>
         <div class="form-group">
           <label class="form-label">Sonnet 模型 ID（可选）</label>
@@ -68,11 +68,10 @@
             type="text"
             class="form-input"
             v-model="defaultSonnetModel"
-            placeholder="如 claude-3-5-sonnet-20241022"
+            :placeholder="currentConfig.defaultSonnetModel ? '当前配置: ' + currentConfig.defaultSonnetModel : (sdkDefaultSonnetModel ? '默认值: ' + sdkDefaultSonnetModel : '如 claude-3-5-sonnet-20241022')"
             @change="saveConfig"
           />
           <span class="form-hint">注入 ANTHROPIC_DEFAULT_SONNET_MODEL</span>
-          <span v-if="sdkDefaultSonnetModel && !defaultSonnetModel" class="form-hint">Claude Code 默认值: {{ sdkDefaultSonnetModel }}</span>
         </div>
         <div class="form-group">
           <label class="form-label">Opus 模型 ID（可选）</label>
@@ -80,11 +79,10 @@
             type="text"
             class="form-input"
             v-model="defaultOpusModel"
-            placeholder="如 claude-3-opus-20240229"
+            :placeholder="currentConfig.defaultOpusModel ? '当前配置: ' + currentConfig.defaultOpusModel : (sdkDefaultOpusModel ? '默认值: ' + sdkDefaultOpusModel : '如 claude-3-opus-20240229')"
             @change="saveConfig"
           />
           <span class="form-hint">注入 ANTHROPIC_DEFAULT_OPUS_MODEL</span>
-          <span v-if="sdkDefaultOpusModel && !defaultOpusModel" class="form-hint">Claude Code 默认值: {{ sdkDefaultOpusModel }}</span>
         </div>
         <div class="form-group">
           <label class="form-label">Reasoning 模型 ID（可选）</label>
@@ -92,11 +90,10 @@
             type="text"
             class="form-input"
             v-model="reasoningModel"
-            placeholder="如 claude-3-7-sonnet-20250219"
+            :placeholder="currentConfig.reasoningModel ? '当前配置: ' + currentConfig.reasoningModel : (sdkReasoningModel ? '默认值: ' + sdkReasoningModel : '如 claude-3-7-sonnet-20250219')"
             @change="saveConfig"
           />
           <span class="form-hint">注入 ANTHROPIC_REASONING_MODEL</span>
-          <span v-if="sdkReasoningModel && !reasoningModel" class="form-hint">Claude Code 默认值: {{ sdkReasoningModel }}</span>
         </div>
       </section>
 
@@ -109,10 +106,51 @@
           </button>
         </h3>
 
-        <div v-if="customModels.length === 0" class="empty-hint">
+        <div v-if="customModels.length === 0 && builtInModels.length === 0" class="empty-hint">
           暂无主模型选择器，点击 + 添加
         </div>
 
+        <!-- 内置模型 -->
+        <div v-for="(model, index) in builtInModels" :key="`builtin-${index}`" class="custom-model-card builtin-model">
+          <div class="model-row">
+            <div class="form-group compact">
+              <label class="form-label-sm">模型 ID (Built-in)</label>
+              <input
+                type="text"
+                class="form-input-sm"
+                :value="model.value"
+                readonly
+                disabled
+                title="内置模型，由上方配置或默认值决定"
+              />
+            </div>
+            <div class="form-group compact">
+              <label class="form-label-sm">显示名称</label>
+              <input
+                type="text"
+                class="form-input-sm"
+                :value="model.label"
+                readonly
+                disabled
+              />
+            </div>
+            <div class="model-actions">
+              <span class="codicon codicon-lock" title="不可删除" style="opacity: 0.5;"></span>
+            </div>
+          </div>
+          <div class="form-group compact" style="margin-top: 4px;">
+              <input
+                type="text"
+                class="form-input-sm"
+                :value="model.description"
+                readonly
+                disabled
+                style="color: var(--vscode-descriptionForeground);"
+              />
+          </div>
+        </div>
+
+        <!-- 自定义模型 -->
         <div v-for="(model, index) in customModels" :key="index" class="custom-model-card">
           <div class="model-row">
             <div class="form-group compact">
@@ -181,8 +219,9 @@
 
       <!-- 版本信息 & 社区 -->
       <section class="settings-section">
-        <div class="version-info">Claudecode v1.0.0</div>
-        <div class="community-info">Code 开源技术交流群：1076321843</div>
+        <div class="version-info">Claude code v1.0.1</div>
+        <div class="community-info">Ccode API 交流群：720198992</div>
+        <div class="community-info">GitHub开源地址: <a href="https://github.com/tianjiangqiji/Claudecode" style="color: inherit;">https://github.com/tianjiangqiji/Claudecode</a></div>
       </section>
     </div>
   </div>
@@ -208,6 +247,17 @@ const defaultHaikuModel = ref('')
 const defaultOpusModel = ref('')
 const defaultSonnetModel = ref('')
 const reasoningModel = ref('')
+
+// 存储当前配置值（用于 placeholder 提示）
+const currentConfig = ref({
+  apiKeyMasked: '',
+  baseUrl: '',
+  defaultHaikuModel: '',
+  defaultOpusModel: '',
+  defaultSonnetModel: '',
+  reasoningModel: '',
+})
+
 const sdkApiKeyMasked = ref('')
 const sdkBaseUrl = ref('')
 const sdkDefaultHaikuModel = ref('')
@@ -215,6 +265,7 @@ const sdkDefaultOpusModel = ref('')
 const sdkDefaultSonnetModel = ref('')
 const sdkReasoningModel = ref('')
 const customModels = ref<Array<{ id: string; label: string; description?: string }>>([])
+const builtInModels = ref<Array<{ value: string; label: string; description?: string; provider?: string }>>([])
 const appendRule = ref('')
 const appendRuleEnabled = ref(true)
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -226,12 +277,24 @@ async function loadProviderStatus() {
 
     const response = await (conn as any).request({ type: 'get_provider_status' })
     if (response) {
+      // 存储到 currentConfig，用于 placeholder
+      currentConfig.value.apiKeyMasked = response.apiKeyMasked || ''
+      currentConfig.value.baseUrl = response.baseUrl || ''
+      currentConfig.value.defaultHaikuModel = response.defaultHaikuModel || ''
+      currentConfig.value.defaultOpusModel = response.defaultOpusModel || ''
+      currentConfig.value.defaultSonnetModel = response.defaultSonnetModel || ''
+      currentConfig.value.reasoningModel = response.reasoningModel || ''
+
+      // 编辑框默认置空（表示不做修改）
+      apiKey.value = '' // API Key 特殊处理，不回显明文，Placeholder 显示 Masked
       apiKeyMasked.value = response.apiKeyMasked || ''
-      baseUrl.value = response.baseUrl || ''
-      defaultHaikuModel.value = response.defaultHaikuModel || ''
-      defaultOpusModel.value = response.defaultOpusModel || ''
-      defaultSonnetModel.value = response.defaultSonnetModel || ''
-      reasoningModel.value = response.reasoningModel || ''
+      
+      baseUrl.value = ''
+      defaultHaikuModel.value = ''
+      defaultOpusModel.value = ''
+      defaultSonnetModel.value = ''
+      reasoningModel.value = ''
+
       sdkApiKeyMasked.value = response.sdkDefaults?.apiKeyMasked || ''
       sdkBaseUrl.value = response.sdkDefaults?.baseUrl || ''
       sdkDefaultHaikuModel.value = response.sdkDefaults?.defaultHaikuModel || ''
@@ -248,6 +311,13 @@ async function loadProviderStatus() {
         }))
       } else {
         customModels.value = []
+      }
+
+      // 回显内置模型
+      if (response.builtInModels && Array.isArray(response.builtInModels)) {
+        builtInModels.value = response.builtInModels;
+      } else {
+        builtInModels.value = [];
       }
 
       // 回显追加规则
@@ -276,6 +346,40 @@ async function refreshClaudeConfig() {
   }
 }
 
+// 清除 API Key
+async function clearApiKey() {
+  try {
+    saveStatus.value = 'saving'
+    const conn = await runtime!.connectionManager.get()
+
+    // 显式发送空字符串以清除配置
+    const config = { apiKey: "" }
+
+    const response = await conn.request({
+      type: 'update_provider_config',
+      config,
+    }) as any
+
+    if (response && response.success === false) {
+      throw new Error(response.error || '清除失败')
+    }
+
+    // 刷新状态
+    await loadProviderStatus()
+    await refreshClaudeConfig()
+    saveStatus.value = 'saved'
+
+    // 2秒后清除保存状态
+    if (saveTimer) {clearTimeout(saveTimer)}
+    saveTimer = setTimeout(() => { saveStatus.value = 'idle' }, 2000)
+  } catch (e) {
+    console.error('[SettingsPage] 清除 API Key 失败:', e)
+    saveStatus.value = 'error'
+    if (saveTimer) {clearTimeout(saveTimer)}
+    saveTimer = setTimeout(() => { saveStatus.value = 'idle' }, 3000)
+  }
+}
+
 // 保存配置
 let saveTimer: any = null
 async function saveConfig() {
@@ -286,12 +390,15 @@ async function saveConfig() {
     // 只发送有值的字段，避免 undefined 覆盖后端已有配置
     // 深拷贝对象/数组，防止 Vue Proxy 序列化问题
     const config: Record<string, any> = {}
-    if (apiKey.value) {config.apiKey = apiKey.value}
-    if (baseUrl.value) {config.baseUrl = baseUrl.value}
-    if (defaultHaikuModel.value) {config.defaultHaikuModel = defaultHaikuModel.value}
-    if (defaultOpusModel.value) {config.defaultOpusModel = defaultOpusModel.value}
-    if (defaultSonnetModel.value) {config.defaultSonnetModel = defaultSonnetModel.value}
-    if (reasoningModel.value) {config.reasoningModel = reasoningModel.value}
+    
+    // 只有当用户输入了内容时，才更新配置
+    if (apiKey.value) { config.apiKey = apiKey.value }
+    if (baseUrl.value) { config.baseUrl = baseUrl.value }
+    if (defaultHaikuModel.value) { config.defaultHaikuModel = defaultHaikuModel.value }
+    if (defaultOpusModel.value) { config.defaultOpusModel = defaultOpusModel.value }
+    if (defaultSonnetModel.value) { config.defaultSonnetModel = defaultSonnetModel.value }
+    if (reasoningModel.value) { config.reasoningModel = reasoningModel.value }
+    
     config.customModels = JSON.parse(JSON.stringify(customModels.value.filter(m => m.id || m.label)))
     config.appendRule = appendRule.value
     config.appendRuleEnabled = appendRuleEnabled.value
@@ -552,6 +659,20 @@ onMounted(() => {
   border-radius: 4px;
   padding: 8px;
   margin-bottom: 8px;
+}
+
+.builtin-model {
+  background: var(--vscode-editor-inactiveSelectionBackground);
+  border-style: dashed;
+}
+
+.model-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 .model-row {

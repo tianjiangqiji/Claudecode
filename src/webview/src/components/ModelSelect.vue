@@ -23,7 +23,8 @@
             id: model.id,
             label: model.label,
             checked: selectedModel === model.id,
-            type: 'model'
+            type: 'model',
+            provider: model.provider
           }"
           :is-selected="selectedModel === model.id"
           :index="index"
@@ -38,7 +39,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, ref, onUnmounted } from 'vue'
+import { effect } from 'alien-signals'
 import { DropdownTrigger, DropdownItem, type DropdownItemData } from './Dropdown'
 import { RuntimeKey } from '../composables/runtimeContext'
 
@@ -65,10 +67,25 @@ const emit = defineEmits<Emits>()
 
 const runtime = inject(RuntimeKey)
 
+// 使用 alien-signals effect 监听配置变化并同步到 Vue ref
+const claudeConfig = ref<any>(undefined)
+
+const stopEffect = effect(() => {
+  const conn = runtime?.connectionManager.connection()
+  if (conn) {
+    claudeConfig.value = conn.claudeConfig()
+  } else {
+    claudeConfig.value = undefined
+  }
+})
+
+onUnmounted(() => {
+  stopEffect()
+})
+
 // 从 claudeConfig 动态获取模型列表
 const modelList = computed<ModelEntry[]>(() => {
-  const conn = runtime?.connectionManager.connection()
-  const config = conn?.claudeConfig?.()
+  const config = claudeConfig.value
 
   // 如果 config 中有模型列表，使用动态列表
   if (config?.models && Array.isArray(config.models) && config.models.length > 0) {

@@ -1,4 +1,4 @@
-# Claudecode
+# Claude code
 
 <p align="center">
   <img src="resources/claude-logo.png" alt="Claudecode Logo" width="128" height="128">

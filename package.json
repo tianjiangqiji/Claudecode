@@ -1,9 +1,9 @@
 {
   "name": "claudix-vscode",
-  "displayName": "Claudecode - AI 智能编程助手",
+  "displayName": "Claude code - AI 智能编程助手",
   "description": "多协议 AI 智能编程助手，支持 Claude Code、OpenAI、Anthropic、Gemini 多种服务提供商。",
-  "version": "1.0.0",
-  "publisher": "Anna",
+  "version": "1.0.1",
+  "publisher": "Skyjee",
   "engines": {
     "vscode": "^1.98.0",
     "node": ">=18.0.0"
@@ -19,7 +19,7 @@
   "main": "./dist/extension.cjs",
   "contributes": {
     "configuration": {
-      "title": "Claudecode 配置",
+      "title": "Claude code 配置",
       "properties": {
         "claudix.selectedModel": {
           "type": "string",

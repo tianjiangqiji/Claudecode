@@ -794,12 +794,48 @@ export class ClaudeAgentService implements IClaudeAgentService {
                     appendRule: this.configService.getValue<string>('claudix.appendRule', ''),
                     appendRuleEnabled: this.configService.getValue<boolean>('claudix.appendRuleEnabled', true),
                     sdkDefaults,
-                    models: models.map(m => ({
-                        value: m.id,
-                        label: m.label,
-                        description: m.description,
-                        provider: m.provider,
-                    })),
+                    builtInModels: [
+                        { key: 'Haiku', config: 'defaultHaikuModel', sdk: 'defaultHaikuModel' },
+                        { key: 'Sonnet', config: 'defaultSonnetModel', sdk: 'defaultSonnetModel' },
+                        { key: 'Opus', config: 'defaultOpusModel', sdk: 'defaultOpusModel' },
+                        { key: 'Reasoning', config: 'reasoningModel', sdk: 'reasoningModel' }
+                    ].map(item => {
+                        const configVal = this.configService.getValue<string>(`claudix.${item.config}`, '');
+                        const sdkVal = (sdkDefaults as any)?.[item.sdk];
+                        const finalVal = configVal || sdkVal;
+                        if (!finalVal) return null;
+                        return {
+                            value: finalVal,
+                            label: `Claude ${item.key}`,
+                            description: configVal ? 'User Configured' : 'SDK Default',
+                            provider: 'builtin'
+                        };
+                    }).filter(Boolean) as any[],
+                    models: [
+                        ...[
+                            { key: 'Haiku', config: 'defaultHaikuModel', sdk: 'defaultHaikuModel' },
+                            { key: 'Sonnet', config: 'defaultSonnetModel', sdk: 'defaultSonnetModel' },
+                            { key: 'Opus', config: 'defaultOpusModel', sdk: 'defaultOpusModel' },
+                            { key: 'Reasoning', config: 'reasoningModel', sdk: 'reasoningModel' }
+                        ].map(item => {
+                            const configVal = this.configService.getValue<string>(`claudix.${item.config}`, '');
+                            const sdkVal = (sdkDefaults as any)?.[item.sdk];
+                            const finalVal = configVal || sdkVal;
+                            if (!finalVal) return null;
+                            return {
+                                value: finalVal,
+                                label: `Claude ${item.key}`,
+                                description: configVal ? 'User Configured' : 'SDK Default',
+                                provider: 'builtin'
+                            };
+                        }).filter(Boolean) as any[],
+                        ...models.map(m => ({
+                            value: m.id,
+                            label: m.label,
+                            description: m.description,
+                            provider: 'custom',
+                        }))
+                    ],
                     allModels: Object.fromEntries(
                         Object.entries(allModels).map(([k, v]) => [
                             k,

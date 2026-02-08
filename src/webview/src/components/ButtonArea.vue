@@ -400,15 +400,15 @@ function handleMentionKeydown(event: KeyboardEvent) {
 }
 
 .button-row {
-  display: grid;
-  grid-template-columns: 4fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  height: 28px;
+  justify-content: space-between;
+  min-height: 28px;
   padding-right: 2px;
   box-sizing: border-box;
-  flex: 1 1 0%;
-  justify-content: space-between;
   width: 100%;
+  gap: 8px;
 }
 
 .controls-section {
