@@ -56,6 +56,12 @@ import type {
     OpenConfigFileResponse,
     OpenClaudeInTerminalRequest,
     OpenClaudeInTerminalResponse,
+    ReloadWindowRequest,
+    ReloadWindowResponse,
+    RewindFilesRequest,
+    RewindFilesResponse,
+    ShowMessageRequest,
+    ShowMessageResponse,
 } from '../../../shared/messages';
 import type { HandlerContext } from './types';
 import type { PermissionMode, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
@@ -740,6 +746,99 @@ export async function handleOpenClaudeInTerminal(
         const errorMsg = error instanceof Error ? error.message : String(error);
         throw new Error(`Failed to open terminal: ${errorMsg}`);
     }
+}
+
+/**
+ * 重新加载窗口
+ */
+export async function handleReloadWindow(
+    _request: ReloadWindowRequest,
+    context: HandlerContext
+): Promise<ReloadWindowResponse> {
+    try {
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
+        return { type: "reload_window_response" };
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to reload window: ${errorMsg}`);
+    }
+}
+
+/**
+ * 回滚文件变更
+ */
+export async function handleRewindFiles(
+    request: RewindFilesRequest,
+    context: HandlerContext
+): Promise<RewindFilesResponse> {
+    const { logService, agentService } = context;
+    const { channelId, messageId } = request;
+
+    logService.info(`[handleRewindFiles] 回滚文件请求: channelId=${channelId}, messageId=${messageId}`);
+
+            try {
+                const channel = agentService.getChannel(channelId);
+                if (!channel) {
+                    throw new Error(`Channel not found: ${channelId}`);
+                }
+
+        // 调用 SDK 的 rewindFiles
+        const result = await channel.query.rewindFiles?.(messageId, { dryRun: false });
+
+        if (!result) {
+            throw new Error('SDK does not support rewindFiles or file checkpointing is not enabled');
+        }
+
+        logService.info(`[handleRewindFiles] 回滚结果: ${JSON.stringify(result)}`);
+
+        if (result.canRewind) {
+             return { 
+                type: "rewind_files_response", 
+                success: true,
+                details: result
+            };
+        } else {
+             return { 
+                type: "rewind_files_response", 
+                success: false,
+                error: 'Cannot rewind: ' + (result as any).error,
+                details: result
+            };
+        }
+       
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        logService.error(`[handleRewindFiles] 回滚失败: ${errorMsg}`);
+        return { 
+            type: "rewind_files_response", 
+            success: false, 
+            error: errorMsg 
+        };
+    }
+}
+
+export async function handleShowMessage(
+    request: ShowMessageRequest,
+    context: HandlerContext
+): Promise<ShowMessageResponse> {
+    const { level, message, items, modal } = request;
+    
+    let result: string | undefined;
+
+    const options = { modal: !!modal };
+
+    if (level === 'error') {
+        result = await vscode.window.showErrorMessage(message, options, ...(items || []));
+    } else if (level === 'warning') {
+        result = await vscode.window.showWarningMessage(message, options, ...(items || []));
+    } else {
+        result = await vscode.window.showInformationMessage(message, options, ...(items || []));
+    }
+
+    return {
+        type: "show_message_response",
+        selected: result
+    };
 }
 
 // ============================================================================

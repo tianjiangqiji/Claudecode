@@ -587,6 +587,43 @@ export interface OpenClaudeInTerminalResponse {
     type: "open_claude_in_terminal_response";
 }
 
+export interface ReloadWindowRequest {
+    type: "reload_window";
+}
+
+export interface ReloadWindowResponse {
+    type: "reload_window_response";
+}
+
+export interface RewindFilesRequest {
+    type: "rewind_files";
+    channelId: string;
+    messageId: string; // SDK message ID (UUID)
+}
+
+export interface RewindFilesResponse {
+    type: "rewind_files_response";
+    success: boolean;
+    error?: string;
+    details?: any;
+}
+
+/**
+ * 显示消息框请求
+ */
+export interface ShowMessageRequest {
+    type: "show_message";
+    level: "info" | "warning" | "error";
+    message: string;
+    items?: string[];
+    modal?: boolean;
+}
+
+export interface ShowMessageResponse {
+    type: "show_message_response";
+    selected?: string;
+}
+
 /**
  * 认证 URL 通知（Extension → WebView）
  */
@@ -686,6 +723,7 @@ export interface FromExtensionWrapper {
  * WebView → Extension 的所有请求类型
  */
 export type WebViewRequest =
+    | ReloadWindowRequest
     | InitRequest
     | OpenFileRequest
     | OpenDiffRequest
@@ -714,7 +752,8 @@ export type WebViewRequest =
     | OpenClaudeInTerminalRequest
     | SetProviderRequest
     | UpdateProviderConfigRequest
-    | GetProviderStatusRequest;
+    | GetProviderStatusRequest
+    | RewindFilesRequest;
 
 /**
  * Extension → WebView 的所有响应类型
@@ -748,7 +787,9 @@ export type WebViewRequestResponse =
     | OpenClaudeInTerminalResponse
     | SetProviderResponse
     | UpdateProviderConfigResponse
-    | GetProviderStatusResponse;
+    | GetProviderStatusResponse
+    | ReloadWindowResponse
+    | RewindFilesResponse;
 
 /**
  * Extension → WebView 的所有请求类型

@@ -23,6 +23,12 @@ export interface UsageData {
   contextWindow: number;
 }
 
+export interface StateSyncMeta {
+  kind: 'permissionMode' | 'modelSelection';
+  source?: string;
+  startedAt: number;
+}
+
 export interface AttachmentPayload {
   fileName: string;
   mediaType: string;
@@ -60,11 +66,21 @@ export interface SessionContext {
   openURL?: (url: string) => void;
 }
 
+interface SessionSnapshot {
+  permissionMode: PermissionMode;
+  modelSelection?: string;
+  thinkingLevel: string;
+  timestamp: number;
+}
+
 export class Session {
   private readonly claudeChannelId = signal<string | undefined>(undefined);
   private currentConnectionPromise?: Promise<BaseTransport>;
   private lastSentSelection?: SelectionRange;
   private effectCleanup?: () => void;
+  private readonly historyLimit = 10;
+  private history: SessionSnapshot[] = [];
+  private redoStack: SessionSnapshot[] = [];
 
   readonly connection = signal<BaseTransport | undefined>(undefined);
 
@@ -81,6 +97,7 @@ export class Session {
   readonly summary = signal<string | undefined>(undefined);
   readonly modelSelection = signal<string | undefined>(undefined);
   readonly thinkingLevel = signal<string>('default_on');
+  readonly stateSyncMeta = signal<StateSyncMeta | null>(null);
   readonly todos = signal<any[]>([]);
   readonly worktree = signal<{ name: string; path: string } | undefined>(undefined);
   readonly selection = signal<SelectionRange | undefined>(undefined);
@@ -300,8 +317,17 @@ export class Session {
     return connection.listFiles(pattern, signal);
   }
 
-  async setPermissionMode(mode: PermissionMode, applyToConnection = true): Promise<boolean> {
+  async setPermissionMode(
+    mode: PermissionMode,
+    applyToConnection = true,
+    source?: string
+  ): Promise<boolean> {
     const previous = this.permissionMode();
+    if (mode === previous) {
+      return true;
+    }
+    const snapshot = this.recordSnapshot('permissionMode');
+    this.stateSyncMeta({ kind: 'permissionMode', source, startedAt: performance.now() });
     this.permissionMode(mode);
 
     const channelId = this.claudeChannelId();
@@ -312,12 +338,18 @@ export class Session {
     const success = await connection.setPermissionMode(channelId, mode);
     if (!success) {
       this.permissionMode(previous);
+      this.discardSnapshot(snapshot);
     }
     return success;
   }
 
-  async setModel(model: ModelOption): Promise<boolean> {
+  async setModel(model: ModelOption, source?: string): Promise<boolean> {
     const previous = this.modelSelection();
+    if (model.value === previous) {
+      return true;
+    }
+    const snapshot = this.recordSnapshot('modelSelection');
+    this.stateSyncMeta({ kind: 'modelSelection', source, startedAt: performance.now() });
     this.modelSelection(model.value);
 
     const channelId = this.claudeChannelId();
@@ -330,6 +362,7 @@ export class Session {
 
     if (!response?.success) {
       this.modelSelection(previous);
+      this.discardSnapshot(snapshot);
       return false;
     }
 
@@ -357,6 +390,97 @@ export class Session {
   async openConfigFile(configType: string): Promise<void> {
     const connection = await this.getConnection();
     await connection.openConfigFile(configType);
+  }
+
+  async undoLastChange(): Promise<boolean> {
+    const target = this.history.pop();
+    if (!target) {
+      await this.context.showNotification?.('没有可撤销的操作', 'error');
+      return false;
+    }
+    const current = this.captureSnapshot();
+    const applied = await this.applySnapshot(target, current);
+    if (!applied) {
+      this.history.push(target);
+      return false;
+    }
+    this.redoStack.push(current);
+    if (this.redoStack.length > this.historyLimit) {
+      this.redoStack.shift();
+    }
+    return true;
+  }
+
+  async showMessage(level: 'info' | 'warning' | 'error', message: string, items?: string[], modal?: boolean): Promise<string | undefined> {
+    const connection = this.connection();
+    if (!connection) {
+      return undefined;
+    }
+    const result = await (connection as any).request({
+        type: 'show_message',
+        level,
+        message,
+        items,
+        modal
+    });
+    return result.selected;
+  }
+
+  async rollbackToMessage(message: Message, options?: { rewindFiles?: boolean }): Promise<boolean> {
+    const messages = this.messages();
+    const index = messages.indexOf(message);
+    if (index === -1) {
+      return false;
+    }
+
+    // 如果正在生成，先中断
+    if (this.busy()) {
+      await this.interrupt();
+    }
+
+    // 处理文件回滚
+    if (options?.rewindFiles) {
+      // 检查 message 是否有 uuid (SDK 需要 uuid)
+      // 我们假设 message.uuid 是 SDK 提供的 uuid。如果 message 是 UserMessage，我们需要确保它有 uuid。
+      // 注意：Frontend 的 Message 类型可能不包含 uuid，需要检查。
+      // 实际上，Message 类型定义在 types.ts 中。
+      // 如果没有 uuid，我们可能无法回滚。
+      
+      const messageId = (message as any).uuid;
+      if (messageId && this.claudeChannelId()) {
+          try {
+             const conn = this.connection();
+             if (conn) {
+                 const result = await (conn as any).request({
+                     type: 'rewind_files',
+                     channelId: this.claudeChannelId(),
+                     messageId: messageId
+                 });
+                 if (!result.success) {
+                     console.error('File rewind failed:', result.error);
+                     // 这里可以选择是否中断回滚，或者仅仅提示警告
+                     // 目前我们仅仅 log 错误，继续回滚对话状态
+                     alert(`文件回滚失败: ${result.error || '未知错误'}`);
+                 }
+             }
+          } catch (e) {
+              console.error('File rewind error:', e);
+              alert(`文件回滚出错: ${e}`);
+          }
+      }
+    }
+
+    // 删除该消息及之后的所有消息
+    // index 是要删除的第一条消息的索引
+    const newMessages = messages.slice(0, index);
+    this.messages(newMessages);
+    
+    // 如果消息列表变空，可能需要重置状态
+    if (newMessages.length === 0) {
+      this.summary(undefined);
+    }
+
+    return true;
   }
 
   onPermissionRequested(callback: (request: PermissionRequest) => void): () => void {
@@ -471,6 +595,63 @@ export class Session {
       if (event.message.usage) {
         this.updateUsage(event.message.usage);
       }
+    }
+  }
+
+  private captureSnapshot(): SessionSnapshot {
+    return {
+      permissionMode: this.permissionMode(),
+      modelSelection: this.modelSelection(),
+      thinkingLevel: this.thinkingLevel(),
+      timestamp: Date.now()
+    };
+  }
+
+  private recordSnapshot(reason: string): SessionSnapshot {
+    const snapshot = this.captureSnapshot();
+    this.history.push(snapshot);
+    if (this.history.length > this.historyLimit) {
+      this.history.shift();
+    }
+    this.redoStack = [];
+    console.debug('[Session] snapshot', { reason, snapshot });
+    return snapshot;
+  }
+
+  private discardSnapshot(snapshot: SessionSnapshot): void {
+    const last = this.history[this.history.length - 1];
+    if (last && last.timestamp === snapshot.timestamp) {
+      this.history.pop();
+    }
+  }
+
+  private async applySnapshot(target: SessionSnapshot, rollback: SessionSnapshot): Promise<boolean> {
+    this.permissionMode(target.permissionMode);
+    this.modelSelection(target.modelSelection);
+    this.thinkingLevel(target.thinkingLevel);
+
+    const channelId = this.claudeChannelId();
+    if (!channelId) {
+      return true;
+    }
+    try {
+      const connection = await this.getConnection();
+      const permissionOk = await connection.setPermissionMode(channelId, target.permissionMode);
+      const modelResp = target.modelSelection
+        ? await connection.setModel(channelId, { value: target.modelSelection })
+        : { success: true };
+      await connection.setThinkingLevel(channelId, target.thinkingLevel);
+      if (!permissionOk || modelResp?.success === false) {
+        throw new Error('sync failed');
+      }
+      return true;
+    } catch (error) {
+      this.permissionMode(rollback.permissionMode);
+      this.modelSelection(rollback.modelSelection);
+      this.thinkingLevel(rollback.thinkingLevel);
+      await this.context.showNotification?.('撤销失败，请重试', 'error');
+      console.error('[Session] undo failed', error);
+      return false;
     }
   }
 

@@ -40,6 +40,7 @@ export class Message {
   subtype?: string;
   session_id?: string;
   is_error?: boolean;
+  uuid?: string;
 
   constructor(
     type: MessageRole,
@@ -49,6 +50,7 @@ export class Message {
       subtype?: string;
       session_id?: string;
       is_error?: boolean;
+      uuid?: string;
     }
   ) {
     this.type = type;
@@ -59,6 +61,7 @@ export class Message {
       this.subtype = extra.subtype;
       this.session_id = extra.session_id;
       this.is_error = extra.is_error;
+      this.uuid = extra.uuid;
     }
   }
 
@@ -135,7 +138,10 @@ export class Message {
           role: raw.message?.role ?? raw.type,
           content: wrappedContent,
         },
-        raw.timestamp || Date.now()
+        raw.timestamp || Date.now(),
+        {
+            uuid: raw.uuid || raw.message?.uuid
+        }
       );
     }
 

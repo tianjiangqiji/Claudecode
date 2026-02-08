@@ -19,7 +19,7 @@ import { computed } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import { useSignal } from '@gn8/alien-signals-vue';
 import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk';
-import type { Session, SelectionRange } from '../core/Session';
+import type { Session, SelectionRange, StateSyncMeta } from '../core/Session';
 import type { PermissionRequest } from '../core/PermissionRequest';
 import type { BaseTransport } from '../transport/BaseTransport';
 import type { ModelOption } from '../../../shared/messages';
@@ -55,6 +55,7 @@ export interface UseSessionReturn {
     totalCost: number;
     contextWindow: number;
   }>;
+  stateSyncMeta: Ref<StateSyncMeta | null>;
 
   // 计算属性
   claudeConfig: ComputedRef<any>;
@@ -77,11 +78,13 @@ export interface UseSessionReturn {
   interrupt: () => Promise<void>;
   restartClaude: () => Promise<void>;
   listFiles: (pattern?: string) => Promise<any>;
-  setPermissionMode: (mode: PermissionMode, applyToConnection?: boolean) => Promise<boolean>;
-  setModel: (model: ModelOption) => Promise<boolean>;
+  setPermissionMode: (mode: PermissionMode, applyToConnection?: boolean, source?: string) => Promise<boolean>;
+  setModel: (model: ModelOption, source?: string) => Promise<boolean>;
   setThinkingLevel: (level: string) => Promise<void>;
+  rollbackToMessage: (message: any, options?: { rewindFiles?: boolean }) => Promise<boolean>;
   getMcpServers: () => Promise<any>;
   openConfigFile: (configType: string) => Promise<void>;
+  showMessage: (level: 'info' | 'warning' | 'error', message: string, items?: string[], modal?: boolean) => Promise<string | undefined>;
   onPermissionRequested: (callback: (request: PermissionRequest) => void) => () => void;
   dispose: () => void;
 
@@ -115,6 +118,7 @@ export function useSession(session: Session): UseSessionReturn {
   const worktree = useSignal(session.worktree);
   const selection = useSignal(session.selection);
   const usageData = useSignal(session.usageData);
+  const stateSyncMeta = useSignal(session.stateSyncMeta);
 
   //  使用 useSignal 包装 alien computed（读-only 使用，不调用 setter）
   const claudeConfig = useSignal(session.claudeConfig as any);
@@ -136,8 +140,10 @@ export function useSession(session: Session): UseSessionReturn {
   const setPermissionMode = session.setPermissionMode.bind(session);
   const setModel = session.setModel.bind(session);
   const setThinkingLevel = session.setThinkingLevel.bind(session);
+  const rollbackToMessage = session.rollbackToMessage.bind(session);
   const getMcpServers = session.getMcpServers.bind(session);
   const openConfigFile = session.openConfigFile.bind(session);
+  const showMessage = session.showMessage.bind(session);
   const onPermissionRequested = session.onPermissionRequested.bind(session);
   const dispose = session.dispose.bind(session);
 
@@ -161,6 +167,7 @@ export function useSession(session: Session): UseSessionReturn {
     worktree,
     selection,
     usageData,
+    stateSyncMeta,
 
     // 计算属性
     claudeConfig,
@@ -180,8 +187,10 @@ export function useSession(session: Session): UseSessionReturn {
     setPermissionMode,
     setModel,
     setThinkingLevel,
+    rollbackToMessage,
     getMcpServers,
     openConfigFile,
+    showMessage,
     onPermissionRequested,
     dispose,
 

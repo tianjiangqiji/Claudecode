@@ -159,6 +159,7 @@ interface Props {
   attachments?: AttachmentItem[]
   thinkingLevel?: string
   permissionMode?: PermissionMode
+  submitBehavior?: 'default' | 'ctrlEnter' | 'manual'
 }
 
 interface Emits {
@@ -184,7 +185,8 @@ const props = withDefaults(defineProps<Props>(), {
   conversationWorking: false,
   attachments: () => [],
   thinkingLevel: 'default_on',
-  permissionMode: 'acceptEdits'
+  permissionMode: 'acceptEdits',
+  submitBehavior: 'default'
 })
 
 const emit = defineEmits<Emits>()
@@ -418,8 +420,15 @@ function handleKeydown(event: KeyboardEvent) {
     if (event.isComposing) {
       return
     }
-    event.preventDefault()
-    handleSubmit()
+    if (props.submitBehavior === 'default') {
+      event.preventDefault()
+      handleSubmit('keyboard')
+      return
+    }
+    if (props.submitBehavior === 'ctrlEnter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault()
+      handleSubmit('keyboard')
+    }
   }
 
   // 延迟检查内容是否为空（在按键处理后）
@@ -758,7 +767,13 @@ function insertTextToInput(text: string) {
   })
 }
 
-function handleSubmit() {
+function handleSubmit(source: 'keyboard' | 'button' = 'button') {
+  if (props.submitBehavior !== 'default' && source === 'button') {
+    return
+  }
+  if (props.submitBehavior === 'manual') {
+    return
+  }
   if (!content.value.trim()) {return}
 
   if (props.conversationWorking) {
@@ -769,7 +784,6 @@ function handleSubmit() {
     emit('submit', content.value)
   }
 
-  // 清空输入框
   content.value = ''
   if (textareaRef.value) {
     textareaRef.value.textContent = ''
@@ -851,6 +865,9 @@ defineExpose({
       textareaRef.value.textContent = content.value
     }
     autoResizeTextarea()
+  },
+  getContent() {
+    return content.value
   },
   /** 聚焦到输入框 */
   focus() {

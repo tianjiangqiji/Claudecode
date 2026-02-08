@@ -21,15 +21,12 @@
           <label class="form-label">API Key（可选）</label>
           <div class="input-with-action">
             <input
-              :type="showApiKey ? 'text' : 'password'"
+              type="password"
               class="form-input"
               v-model="apiKey"
               :placeholder="apiKeyMasked ? '已配置: ' + apiKeyMasked : (sdkApiKeyMasked ? '默认值: ' + sdkApiKeyMasked : '留空使用本地 CLI 认证')"
               @change="saveConfig"
             />
-            <button class="input-action-btn" @click="showApiKey = !showApiKey" :title="showApiKey ? '隐藏' : '显示'">
-              <span class="codicon" :class="showApiKey ? 'codicon-eye-closed' : 'codicon-eye'"></span>
-            </button>
             <button v-if="apiKeyMasked" class="input-action-btn" @click="clearApiKey" title="清除配置">
               <span class="codicon codicon-trash"></span>
             </button>
@@ -207,6 +204,10 @@
           <span class="codicon" :class="saveStatus === 'saving' ? 'codicon-loading codicon-modifier-spin' : 'codicon-save'"></span>
           <span>{{ saveStatus === 'saving' ? '保存中...' : '保存配置' }}</span>
         </button>
+        <button class="btn-secondary" @click="reloadWindow" title="如果修改配置后未生效，请尝试重新加载">
+          <span class="codicon codicon-refresh"></span>
+          <span>重新加载插件</span>
+        </button>
         <div v-if="saveStatus === 'saved'" class="save-indicator saved">
           <span class="codicon codicon-check"></span>
           <span>配置已保存</span>
@@ -220,7 +221,7 @@
       <!-- 版本信息 & 社区 -->
       <section class="settings-section">
         <div class="version-info">Claude code v1.0.1</div>
-        <div class="community-info">Ccode API 交流群：720198992</div>
+        <div class="community-info">Ccode API : <a href="https://api.ccode.vip" style="color: inherit;">https://api.ccode.vip</a></div>
         <div class="community-info">GitHub开源地址: <a href="https://github.com/tianjiangqiji/Claudecode" style="color: inherit;">https://github.com/tianjiangqiji/Claudecode</a></div>
       </section>
     </div>
@@ -241,7 +242,6 @@ if (!runtime) {throw new Error('[SettingsPage] runtime not provided')}
 // 状态
 const apiKey = ref('')
 const apiKeyMasked = ref('')
-const showApiKey = ref(false)
 const baseUrl = ref('')
 const defaultHaikuModel = ref('')
 const defaultOpusModel = ref('')
@@ -437,6 +437,29 @@ function addCustomModel() {
 function removeCustomModel(index: number) {
   customModels.value.splice(index, 1)
   saveConfig()
+}
+
+// 重新加载窗口
+async function reloadWindow() {
+  try {
+    const conn = await runtime!.connectionManager.get()
+    
+    const response = await (conn as any).request({
+      type: 'show_message',
+      level: 'warning',
+      message: '确定要重新加载插件吗？这将丢失当前未保存的对话状态。',
+      items: ['确定', '取消'],
+      modal: false
+    }) as any
+
+    if (response?.selected !== '确定') {
+      return
+    }
+
+    await (conn as any).request({ type: 'reload_window' })
+  } catch (e) {
+    console.error('[SettingsPage] 重新加载失败:', e)
+  }
 }
 
 onMounted(() => {

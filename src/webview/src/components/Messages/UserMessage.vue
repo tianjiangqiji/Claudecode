@@ -2,7 +2,6 @@
   <div class="user-message">
     <div class="message-wrapper">
       <div
-        ref="containerRef"
         class="message-content"
         :class="{ editing: isEditing }"
       >
@@ -34,11 +33,20 @@
             :show-progress="false"
             :conversation-working="false"
             :attachments="attachments"
+            :selected-model="selectedModel"
+            :permission-mode="permissionMode"
+            submit-behavior="ctrlEnter"
             ref="chatInputRef"
             @submit="handleSaveEdit"
             @stop="cancelEdit"
             @remove-attachment="handleRemoveAttachment"
+            @model-select="handleModelSelect"
+            @mode-select="handleModeSelect"
           />
+          <div class="edit-actions">
+            <button class="edit-apply-btn" @click="handleApplyEdit">应用修改</button>
+            <button class="edit-cancel-btn" @click="cancelEdit">取消</button>
+          </div>
         </div>
       </div>
     </div>
@@ -46,47 +54,68 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
-import type { Message } from '../../models/Message';
-import type { ToolContext } from '../../types/tool';
-import type { AttachmentItem } from '../../types/attachment';
+import { ref, computed, nextTick, onMounted, onUnmounted, inject } from 'vue';
+import { RuntimeKey } from '../../composables/runtimeContext';
+import { useSessionStore } from '../../composables/useSessionStore';
 import ChatInputBox from '../ChatInputBox.vue';
-import FileIcon from '../FileIcon.vue';
+import type { AttachmentItem } from '../../types/attachment';
+import type { Message } from '../../models/Message';
 
-interface Props {
+const props = defineProps<{
   message: Message;
-  context: ToolContext;
-}
+}>();
 
-const props = defineProps<Props>();
+const emit = defineEmits<{
+  edit: [string];
+}>();
 
+const runtime = inject(RuntimeKey);
+const store = runtime ? useSessionStore(runtime.sessionStore) : undefined;
+const activeSession = computed(() => store?.activeSession.value);
+const selectedModel = computed(() => activeSession.value?.modelSelection());
+const permissionMode = computed(() => activeSession.value?.permissionMode());
+
+const chatInputRef = ref<InstanceType<typeof ChatInputBox> | null>(null);
 const isEditing = ref(false);
-const chatInputRef = ref<InstanceType<typeof ChatInputBox>>();
-const containerRef = ref<HTMLElement>();
 const attachments = ref<AttachmentItem[]>([]);
 
-// 显示内容（纯文本）
 const displayContent = computed(() => {
   if (typeof props.message.message.content === 'string') {
     return props.message.message.content;
   }
-  // 如果是 content blocks，提取文本
   if (Array.isArray(props.message.message.content)) {
     return props.message.message.content
-      .map(wrapper => {
-        const block = wrapper.content;
-        if (block.type === 'text') {
-          return block.text;
-        }
-        return '';
-      })
-      .join(' ');
+      .map(wrapper => wrapper.content)
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('\n');
   }
   return '';
 });
 
+// 处理模型切换
+async function handleModelSelect(modelId: string) {
+  const session = activeSession.value;
+  if (session) {
+    await session.setModel({ value: modelId }, 'history');
+  }
+}
+
+// 处理模式切换
+async function handleModeSelect(mode: any) {
+  const session = activeSession.value;
+  if (session) {
+    await session.setPermissionMode(mode, true, 'history');
+  }
+}
+
 // 从消息内容中提取附件（image 和 document blocks）
 function extractAttachments(): AttachmentItem[] {
+  // 兼容旧版 string 类型内容
+  if (typeof props.message.message.content === 'string') {
+    return [];
+  }
+
   if (typeof props.message.message.content === 'string') {
     return [];
   }
@@ -148,20 +177,56 @@ function cancelEdit() {
   attachments.value = []; // 清空附件列表
 }
 
-function handleSaveEdit(content?: string) {
-  const finalContent = content || displayContent.value;
-
-  if (finalContent.trim() && finalContent !== displayContent.value) {
-    // TODO: 调用 session.send() 发送编辑后的消息
-    console.log('[UserMessage] Save edit:', finalContent.trim());
+async function handleSaveEdit(content?: string) {
+  const session = activeSession.value;
+  if (!session) {return;}
+  if (session.busy?.()) {
+    await runtime?.appContext.showNotification?.('当前对话进行中，无法提交编辑', 'warning');
+    return;
   }
 
-  cancelEdit();
+  const input = (content ?? chatInputRef.value?.getContent?.() ?? displayContent.value).trim();
+  if (!input && attachments.value.length === 0) {
+    return;
+  }
+
+  const payloads = attachments.value.map(a => ({
+    fileName: a.fileName,
+    mediaType: a.mediaType,
+    data: a.data,
+    fileSize: a.fileSize
+  }));
+
+  try {
+    await session.send(input || ' ', payloads);
+    cancelEdit();
+  } catch (error) {
+    await runtime?.appContext.showNotification?.('提交编辑失败', 'error');
+    console.error('[UserMessage] Save edit failed', error);
+  }
 }
 
-function handleRestore() {
-  // TODO: 实现 restore checkpoint 逻辑
-  console.log('[UserMessage] Restore checkpoint clicked');
+function handleApplyEdit() {
+  void handleSaveEdit(chatInputRef.value?.getContent?.());
+}
+
+async function handleRestore() {
+  const session = activeSession.value;
+  if (!session) {return;}
+  
+  const choice = await session.showMessage(
+    'warning',
+    '确定要回滚到此消息吗？\n\n注意：这将删除此消息之后的所有对话记录。',
+    ['仅撤回聊天记录', '回滚聊天记录与在此区间编辑的文件', '取消'],
+    false
+  );
+
+  if (!choice || choice === '取消') {
+    return;
+  }
+
+  const rewindFiles = choice === '回滚聊天记录与在此区间编辑的文件';
+  await session.rollbackToMessage(props.message, { rewindFiles });
 }
 
 // 监听键盘事件
@@ -172,28 +237,13 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
-// 监听点击外部取消编辑
-function handleClickOutside(event: MouseEvent) {
-  if (!isEditing.value) {return;}
-
-  const target = event.target as HTMLElement;
-
-  // 检查是否点击了组件内部
-  if (containerRef.value?.contains(target)) {return;}
-
-  // 点击外部，取消编辑
-  cancelEdit();
-}
-
 // 生命周期管理
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown);
-  document.addEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown);
-  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -329,6 +379,35 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   box-sizing: border-box;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.edit-apply-btn,
+.edit-cancel-btn {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.edit-apply-btn {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.edit-apply-btn:hover,
+.edit-cancel-btn:hover {
+  filter: brightness(1.05);
 }
 
 /* 编辑模式下的特定样式覆盖 */

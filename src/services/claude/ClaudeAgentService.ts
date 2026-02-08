@@ -77,6 +77,9 @@ import {
     handleOpenContent,
     handleOpenURL,
     handleOpenConfigFile,
+    handleReloadWindow,
+    handleRewindFiles,
+    handleShowMessage,
     // handleOpenClaudeInTerminal,
     // handleGetAuthStatus,
     // handleLogin,
@@ -177,6 +180,11 @@ export interface IClaudeAgentService {
      * 设置模型
      */
     setModel(channelId: string, model: string): Promise<void>;
+
+    /**
+     * 获取 Channel
+     */
+    getChannel(channelId: string): Channel | undefined;
 
     /**
      * 关闭
@@ -727,6 +735,15 @@ export class ClaudeAgentService implements IClaudeAgentService {
             case "open_config_file":
                 return handleOpenConfigFile(request, this.handlerContext);
 
+            case "reload_window":
+                return handleReloadWindow(request as any, this.handlerContext);
+
+            case "rewind_files":
+                return handleRewindFiles(request as any, this.handlerContext);
+
+            case "show_message":
+                return handleShowMessage(request as any, this.handlerContext);
+
             // Provider 配置
             case "set_provider": {
                 const providerReq = request as any;
@@ -803,7 +820,9 @@ export class ClaudeAgentService implements IClaudeAgentService {
                         const configVal = this.configService.getValue<string>(`claudix.${item.config}`, '');
                         const sdkVal = (sdkDefaults as any)?.[item.sdk];
                         const finalVal = configVal || sdkVal;
-                        if (!finalVal) return null;
+                        if (!finalVal) {
+                            return null;
+                        }
                         return {
                             value: finalVal,
                             label: `Claude ${item.key}`,
@@ -821,7 +840,9 @@ export class ClaudeAgentService implements IClaudeAgentService {
                             const configVal = this.configService.getValue<string>(`claudix.${item.config}`, '');
                             const sdkVal = (sdkDefaults as any)?.[item.sdk];
                             const finalVal = configVal || sdkVal;
-                            if (!finalVal) return null;
+                            if (!finalVal) {
+                                return null;
+                            }
                             return {
                                 value: finalVal,
                                 label: `Claude ${item.key}`,
@@ -966,6 +987,13 @@ export class ClaudeAgentService implements IClaudeAgentService {
         );
 
         return response.result;
+    }
+
+    /**
+     * 获取 Channel
+     */
+    getChannel(channelId: string): Channel | undefined {
+        return this.channels.get(channelId);
     }
 
     /**

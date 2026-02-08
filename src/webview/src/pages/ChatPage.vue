@@ -3,8 +3,8 @@
     <!-- 顶部标题栏 -->
     <div class="chat-header">
       <div class="header-left">
-        <button class="menu-btn" @click="$emit('switchToSessions')">
-          <span class="codicon codicon-menu"></span>
+        <button class="menu-btn" @click="$emit('switchToSessions')" title="返回会话列表">
+          <span class="codicon codicon-arrow-left"></span>
         </button>
         <h2 class="chat-title">{{ title }}</h2>
       </div>
@@ -96,8 +96,8 @@
             :conversation-working="isBusy"
             :attachments="attachments"
             :thinking-level="session?.thinkingLevel.value"
-            :permission-mode="session?.permissionMode.value"
-            :selected-model="session?.modelSelection.value"
+            :permission-mode="inputPermissionMode"
+            :selected-model="inputSelectedModel"
             @submit="handleSubmit"
             @stop="handleStop"
             @add-attachment="handleAddAttachment"
@@ -181,6 +181,8 @@
   const permissionMode = computed(
     () => session.value?.permissionMode.value ?? 'acceptEdits'
   );
+  const inputPermissionMode = ref<PermissionMode>('acceptEdits');
+  const inputSelectedModel = ref<string | undefined>(undefined);
   const permissionRequests = computed(
     () => session.value?.permissionRequests.value ?? []
   );
@@ -256,6 +258,8 @@
     // 切换会话：复位并强制滚动底部
     prevCount = 0;
     userScrolledUp.value = false;
+    inputPermissionMode.value = session.value?.permissionMode.value ?? 'acceptEdits';
+    inputSelectedModel.value = session.value?.modelSelection.value;
     await nextTick();
     scrollToBottom(true);
   });
@@ -404,8 +408,9 @@
   async function handleModeSelect(mode: PermissionMode) {
     const s = session.value;
     if (!s) {return;}
-
-    await s.setPermissionMode(mode);
+    console.debug('[Sync] request permissionMode from input', mode);
+    inputPermissionMode.value = mode;
+    await s.setPermissionMode(mode, true, 'input');
   }
 
   // permissionMode.toggle：按固定顺序轮转
@@ -443,8 +448,9 @@
   async function handleModelSelect(modelId: string) {
     const s = session.value;
     if (!s) {return;}
-
-    await s.setModel({ value: modelId });
+    console.debug('[Sync] request modelSelection from input', modelId);
+    inputSelectedModel.value = modelId;
+    await s.setModel({ value: modelId }, 'input');
   }
 
   function handleStop() {
@@ -476,6 +482,41 @@
   function handleRemoveAttachment(id: string) {
     attachments.value = attachments.value.filter(a => a.id !== id);
   }
+
+  function logSync(kind: 'permissionMode' | 'modelSelection', value: string | undefined) {
+    const meta = session.value?.stateSyncMeta.value;
+    if (meta && meta.kind === kind) {
+      const elapsed = Math.round(performance.now() - meta.startedAt);
+      const within = elapsed <= 300;
+      console.debug(
+        `[Sync] ${kind}=${value} source=${meta.source ?? 'unknown'} elapsed=${elapsed}ms`,
+        { within }
+      );
+      if (!within) {
+        console.warn('[Sync] exceeded 300ms', { kind, elapsed, value });
+      }
+      session.value!.stateSyncMeta.value = null;
+      return;
+    }
+    console.debug(`[Sync] ${kind} updated`, value);
+  }
+
+  watch(
+    () => session.value?.permissionMode.value,
+    (mode) => {
+      if (!mode) {return;}
+      inputPermissionMode.value = mode;
+      logSync('permissionMode', mode);
+    }
+  );
+
+  watch(
+    () => session.value?.modelSelection.value,
+    (model) => {
+      inputSelectedModel.value = model;
+      logSync('modelSelection', model);
+    }
+  );
 
   // Permission modal handler
   function handleResolvePermission(request: PermissionRequest, allow: boolean) {

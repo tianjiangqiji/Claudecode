@@ -157,6 +157,9 @@ export class ClaudeSdkService implements IClaudeSdkService {
             // 环境变量
             env: this.getEnvironmentVariables(),
 
+            // 启用文件检查点（支持文件回滚）
+            enableFileCheckpointing: true,
+
             // 系统提示追加（含用户追加规则）
             systemPrompt: {
                 type: 'preset',
