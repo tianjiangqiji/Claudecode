@@ -757,6 +757,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
                     if (appendRuleEnabled !== undefined) {
                         await this.configService.updateValue('claudix.appendRuleEnabled', appendRuleEnabled);
                     }
+                    await this.updateClaudeSettingsFile(providerConfig);
                     return {
                         type: "update_provider_config_response",
                         success: true,
@@ -1045,6 +1046,62 @@ export class ClaudeAgentService implements IClaudeAgentService {
         } catch {
             return null;
         }
+    }
+
+    private async updateClaudeSettingsFile(config: Record<string, any>): Promise<void> {
+        const shouldUpdate = [
+            "apiKey",
+            "baseUrl",
+            "defaultHaikuModel",
+            "defaultOpusModel",
+            "defaultSonnetModel",
+            "reasoningModel",
+        ].some(key => key in config);
+
+        if (!shouldUpdate) {
+            return;
+        }
+
+        const configDir = process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
+        const settingsPath = path.join(configDir, "settings.json");
+
+        let current: any = {};
+        try {
+            const content = await fs.readFile(settingsPath, "utf8");
+            current = JSON.parse(content);
+        } catch {
+            current = {};
+        }
+
+        if (!current || typeof current !== "object") {
+            current = {};
+        }
+
+        const env = current.env && typeof current.env === "object" ? current.env : {};
+
+        if (config.apiKey !== undefined) {
+            env.ANTHROPIC_API_KEY = config.apiKey || "";
+        }
+        if (config.baseUrl !== undefined) {
+            env.ANTHROPIC_BASE_URL = config.baseUrl || "";
+        }
+        if (config.defaultHaikuModel !== undefined) {
+            env.ANTHROPIC_DEFAULT_HAIKU_MODEL = config.defaultHaikuModel || "";
+        }
+        if (config.defaultOpusModel !== undefined) {
+            env.ANTHROPIC_DEFAULT_OPUS_MODEL = config.defaultOpusModel || "";
+        }
+        if (config.defaultSonnetModel !== undefined) {
+            env.ANTHROPIC_DEFAULT_SONNET_MODEL = config.defaultSonnetModel || "";
+        }
+        if (config.reasoningModel !== undefined) {
+            env.ANTHROPIC_REASONING_MODEL = config.reasoningModel || "";
+        }
+
+        current.env = env;
+
+        await fs.mkdir(configDir, { recursive: true });
+        await fs.writeFile(settingsPath, JSON.stringify(current, null, 2), "utf8");
     }
 
     private findValueFromSources(sources: any[], keys: string[]): string | undefined {

@@ -160,9 +160,9 @@
     "typecheck": "tsc --noEmit",
     "typecheck:webview": "vue-tsc -p src/webview/tsconfig.json --noEmit",
     "typecheck:all": "pnpm run typecheck && pnpm run typecheck:webview",
-    "prepackage": "pnpm run build && cp README.md README.md.bak && sed -i '' 's|https://awesome.re/mentioned-badge.svg|assets/mentioned-badge.png|g' README.md",
+    "prepackage": "pnpm run build && node -e \"const fs=require('fs');fs.copyFileSync('README.md','README.md.bak');let s=fs.readFileSync('README.md','utf8');s=s.replace(/https:\\/\\/awesome\\.re\\/mentioned-badge\\.svg/g,'assets/mentioned-badge.png');fs.writeFileSync('README.md',s);\"",
     "package": "vsce package --no-dependencies",
-    "postpackage": "mv README.md.bak README.md",
+    "postpackage": "node -e \"const fs=require('fs');if(fs.existsSync('README.md.bak')){fs.copyFileSync('README.md.bak','README.md');fs.unlinkSync('README.md.bak');}\"",
     "lint": "eslint src --ext ts",
     "lint:fix": "eslint src --ext ts --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,vue}\" && eslint src --ext ts,tsx,vue --fix"

@@ -292,7 +292,7 @@ async function saveConfig() {
     if (defaultOpusModel.value) {config.defaultOpusModel = defaultOpusModel.value}
     if (defaultSonnetModel.value) {config.defaultSonnetModel = defaultSonnetModel.value}
     if (reasoningModel.value) {config.reasoningModel = reasoningModel.value}
-    config.customModels = JSON.parse(JSON.stringify(customModels.value.filter(m => m.id && m.label)))
+    config.customModels = JSON.parse(JSON.stringify(customModels.value.filter(m => m.id || m.label)))
     config.appendRule = appendRule.value
     config.appendRuleEnabled = appendRuleEnabled.value
 

@@ -175,11 +175,22 @@ const openSession = (wrappedSession: ReturnType<typeof useSession> | undefined) 
 
 const deleteSession = async (wrappedSession: ReturnType<typeof useSession> | undefined) => {
   if (!wrappedSession?.sessionId.value) {return;}
-  const confirmed = window.confirm('确定删除该会话吗？此操作不可恢复。');
-  if (!confirmed) {return;}
-  const success = await store.deleteSession(wrappedSession.sessionId.value);
-  if (!success) {
-    error.value = '删除会话失败';
+  try {
+    const choice = await runtime.appContext.showNotification(
+      '确定删除该会话吗？此操作不可恢复。',
+      'warning',
+      ['删除', '取消'],
+      true
+    );
+    if (choice !== '删除') {return;}
+    const success = await store.deleteSession(wrappedSession.sessionId.value);
+    if (!success) {
+      error.value = '删除会话失败';
+      await runtime.appContext.showNotification('删除会话失败', 'error');
+    }
+  } catch (err) {
+    error.value = `删除会话失败: ${err}`;
+    await runtime.appContext.showNotification('删除会话失败', 'error');
   }
 };
 
