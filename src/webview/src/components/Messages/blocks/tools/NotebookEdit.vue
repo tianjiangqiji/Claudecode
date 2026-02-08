@@ -75,10 +75,10 @@ const isPermissionRequest = computed(() => {
 // 权限请求阶段默认展开,执行完成后不展开
 const shouldExpand = computed(() => {
   // 权限请求阶段展开
-  if (isPermissionRequest.value) return true;
+  if (isPermissionRequest.value) {return true;}
 
   // 有错误时展开
-  if (props.toolResult?.is_error) return true;
+  if (props.toolResult?.is_error) {return true;}
 
   return false;
 });

@@ -48,7 +48,7 @@ const toolResult = props.wrapper ? useSignal(props.wrapper.toolResult) : ref(und
 
 // 获取 tool use result（会话加载时的数据）
 const toolUseResult = computed(() => {
-  if (!props.wrapper) return undefined;
+  if (!props.wrapper) {return undefined;}
   return props.wrapper.toolUseResult;
 });
 

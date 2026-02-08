@@ -71,6 +71,8 @@ export interface IClaudeSessionService {
      * 获取指定会话的所有消息
      */
     getSession(sessionIdOrPath: string, cwd: string): Promise<any[]>;
+
+    deleteSession(sessionId: string, cwd: string): Promise<boolean>;
 }
 
 // ============================================================================
@@ -294,7 +296,7 @@ async function loadProjectData(cwd: string): Promise<SessionData> {
     const allSummaries = new Map<string, string>();
 
     for (const { sessionId, sessionMessages: messages, summaries } of loadedData) {
-        if (!sessionId) continue;
+        if (!sessionId) {continue;}
 
         sessionMessages.set(sessionId, new Set(messages.keys()));
 
@@ -439,6 +441,26 @@ export class ClaudeSessionService implements IClaudeSessionService {
         } catch (error) {
             this.logService.error(`[ClaudeSessionService] 获取会话消息失败:`, error);
             return [];
+        }
+    }
+
+    async deleteSession(sessionId: string, cwd: string): Promise<boolean> {
+        try {
+            this.logService.info(`[ClaudeSessionService] 删除会话: ${sessionId}`);
+
+            const validated = validateSessionId(sessionId);
+            if (!validated) {
+                return false;
+            }
+
+            const projectDir = getProjectHistoryDir(cwd);
+            const filePath = path.join(projectDir, `${validated}.jsonl`);
+
+            await fs.rm(filePath, { force: true });
+            return true;
+        } catch (error) {
+            this.logService.error(`[ClaudeSessionService] 删除会话失败:`, error);
+            return false;
         }
     }
 

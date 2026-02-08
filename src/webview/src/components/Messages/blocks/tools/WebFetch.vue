@@ -98,18 +98,18 @@ const durationMs = computed(() => {
 
 // 状态徽章样式
 const statusClass = computed(() => {
-  if (!statusCode.value) return '';
+  if (!statusCode.value) {return '';}
   const code = statusCode.value;
-  if (code >= 200 && code < 300) return 'status-success';
-  if (code >= 300 && code < 400) return 'status-redirect';
-  if (code >= 400 && code < 500) return 'status-client-error';
-  if (code >= 500) return 'status-server-error';
+  if (code >= 200 && code < 300) {return 'status-success';}
+  if (code >= 300 && code < 400) {return 'status-redirect';}
+  if (code >= 400 && code < 500) {return 'status-client-error';}
+  if (code >= 500) {return 'status-server-error';}
   return '';
 });
 
 // 缩短 URL 显示
 const displayUrl = computed(() => {
-  if (!url.value) return '';
+  if (!url.value) {return '';}
   try {
     const urlObj = new URL(url.value);
     const hostname = urlObj.hostname;
@@ -137,13 +137,13 @@ const isPermissionRequest = computed(() => {
 // 权限请求阶段默认展开,执行完成后不展开
 const shouldExpand = computed(() => {
   // 权限请求阶段展开
-  if (isPermissionRequest.value && prompt.value) return true;
+  if (isPermissionRequest.value && prompt.value) {return true;}
 
   // 有错误时展开
-  if (props.toolResult?.is_error) return true;
+  if (props.toolResult?.is_error) {return true;}
 
   // 有结果时展开
-  if (result.value) return true;
+  if (result.value) {return true;}
 
   return false;
 });

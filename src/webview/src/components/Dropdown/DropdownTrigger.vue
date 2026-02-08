@@ -146,7 +146,7 @@ const dropdownStyle = computed(() => {
     zIndex: 2548
   }
 
-  if (!triggerRef.value) return style
+  if (!triggerRef.value) {return style}
 
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
@@ -218,7 +218,7 @@ const dropdownStyle = computed(() => {
 
 // 方法
 function toggleDropdown() {
-  if (props.disabled) return
+  if (props.disabled) {return}
 
   if (isVisible.value) {
     closeDropdown()
@@ -228,7 +228,7 @@ function toggleDropdown() {
 }
 
 function openDropdown() {
-  if (props.disabled) return
+  if (props.disabled) {return}
 
   isVisible.value = true
   emit('open')
@@ -254,7 +254,7 @@ function onSearchInput() {
 
 // 键盘事件处理
 function handleKeydown(event: KeyboardEvent) {
-  if (!isVisible.value) return
+  if (!isVisible.value) {return}
 
   if (event.key === 'Escape') {
     event.preventDefault()
@@ -264,12 +264,12 @@ function handleKeydown(event: KeyboardEvent) {
 
 // 点击外部关闭
 function handleClickOutside(event: MouseEvent) {
-  if (!isVisible.value || !props.closeOnClickOutside) return
+  if (!isVisible.value || !props.closeOnClickOutside) {return}
 
   const target = event.target as HTMLElement
 
   // 检查是否点击了组件内部
-  if (containerRef.value?.contains(target)) return
+  if (containerRef.value?.contains(target)) {return}
 
   closeDropdown()
 }
@@ -287,22 +287,22 @@ onUnmounted(() => {
 
 // 最小位移保证选中项在可视区域
 function ensureSelectedVisible() {
-  if (!isVisible.value) return
-  if (props.selectedIndex == null || props.selectedIndex < 0) return
+  if (!isVisible.value) {return}
+  if (props.selectedIndex == null || props.selectedIndex < 0) {return}
 
   const root = innerContainerRef.value
   const scrollable = scrollableRef.value
-  if (!root || !scrollable) return
+  if (!root || !scrollable) {return}
 
   const wrapper = root.querySelector('.scrollable-content-wrapper') as HTMLElement | null
   const content = root.querySelector('.scrollable-content-container') as HTMLElement | null
   const selectedEl = root.querySelector('.dropdown-menu-item[data-is-selected="true"]') as HTMLElement | null
-  if (!wrapper || !content || !selectedEl) return
+  if (!wrapper || !content || !selectedEl) {return}
 
   const padding = props.scrollPadding ?? 6
   const wrapperH = wrapper.clientHeight
   const contentH = content.scrollHeight
-  if (contentH <= wrapperH + 1) return
+  if (contentH <= wrapperH + 1) {return}
 
   const contentRect = content.getBoundingClientRect()
   const wrapperRect = wrapper.getBoundingClientRect()
@@ -342,7 +342,7 @@ watch(() => props.selectedIndex, () => {
 })
 
 watch(isVisible, (visible) => {
-  if (visible) requestAnimationFrame(() => ensureSelectedVisible())
+  if (visible) {requestAnimationFrame(() => ensureSelectedVisible())}
 })
 
 // 暴露方法

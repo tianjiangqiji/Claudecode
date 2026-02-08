@@ -192,25 +192,25 @@ export function mergeConsecutiveReadMessages(messages: Message[]): Message[] {
 }
 
 function isAssistantRead(msg: Message): boolean {
-    if (msg.type !== 'assistant') return false;
+    if (msg.type !== 'assistant') {return false;}
     const content = msg.message.content;
-    if (typeof content === 'string' || !Array.isArray(content)) return false;
+    if (typeof content === 'string' || !Array.isArray(content)) {return false;}
     return content.some(w => w.content.type === 'tool_use' && (w.content as ToolUseContentBlock).name === 'Read');
 }
 
 function firstReadToolUseWrapper(msg: Message): ContentBlockWrapper | undefined {
     const content = msg.message.content;
-    if (typeof content === 'string' || !Array.isArray(content)) return undefined;
+    if (typeof content === 'string' || !Array.isArray(content)) {return undefined;}
     return content.find(w => w.content.type === 'tool_use' && (w.content as ToolUseContentBlock).name === 'Read');
 }
 
 function hasNonErrorToolResult(msg: Message): boolean {
     const wrapper = firstReadToolUseWrapper(msg);
-    if (!wrapper) return false;
+    if (!wrapper) {return false;}
 
     // 🔥 使用 alien-signals API：toolResult 是 signal，需要函数调用
     const tr = wrapper.getToolResultValue();
-    if (!tr) return false;
+    if (!tr) {return false;}
     return !tr.is_error;
 }
 

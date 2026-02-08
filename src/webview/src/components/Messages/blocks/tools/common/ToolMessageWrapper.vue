@@ -118,9 +118,9 @@ const isHovered = ref(false);
 
 // 状态计算
 const indicatorState = computed<'success' | 'error' | 'pending' | null>(() => {
-  if (props.toolResult?.is_error) return 'error';
-  if (props.permissionState === 'pending') return 'pending';
-  if (props.toolResult) return 'success';
+  if (props.toolResult?.is_error) {return 'error';}
+  if (props.permissionState === 'pending') {return 'pending';}
+  if (props.toolResult) {return 'success';}
   return null;
 });
 

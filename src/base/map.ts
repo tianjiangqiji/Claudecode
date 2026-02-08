@@ -123,28 +123,32 @@ export class ResourceMap<T> implements Map<URI, T> {
 			clb = clb.bind(thisArg);
 		}
 		for (const [_, entry] of this.map) {
-			clb(entry.value, entry.uri, this);
+			clb(entry.value, entry.uri, this as any);
 		}
 	}
 
+	// @ts-ignore
 	*values(): IterableIterator<T> {
 		for (const entry of this.map.values()) {
 			yield entry.value;
 		}
 	}
 
+	// @ts-ignore
 	*keys(): IterableIterator<URI> {
 		for (const entry of this.map.values()) {
 			yield entry.uri;
 		}
 	}
 
+	// @ts-ignore
 	*entries(): IterableIterator<[URI, T]> {
 		for (const entry of this.map.values()) {
 			yield [entry.uri, entry.value];
 		}
 	}
 
+	// @ts-ignore
 	*[Symbol.iterator](): IterableIterator<[URI, T]> {
 		for (const [, entry] of this.map) {
 			yield [entry.uri, entry.value];
@@ -188,25 +192,29 @@ export class ResourceSet implements Set<URI> {
 	}
 
 	forEach(callbackfn: (value: URI, value2: URI, set: Set<URI>) => void, thisArg?: any): void {
-		this._map.forEach((_value, key) => callbackfn.call(thisArg, key, key, this));
+		this._map.forEach((_value, key) => callbackfn.call(thisArg, key, key, this as any));
 	}
 
 	has(value: URI): boolean {
 		return this._map.has(value);
 	}
 
+	// @ts-ignore
 	entries(): IterableIterator<[URI, URI]> {
 		return this._map.entries();
 	}
 
+	// @ts-ignore
 	keys(): IterableIterator<URI> {
 		return this._map.keys();
 	}
 
+	// @ts-ignore
 	values(): IterableIterator<URI> {
 		return this._map.keys();
 	}
 
+	// @ts-ignore
 	[Symbol.iterator](): IterableIterator<URI> {
 		return this.keys();
 	}
@@ -342,6 +350,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		return item.value;
 	}
 
+	// @ts-ignore
 	forEach(callbackfn: (value: V, key: K, map: LinkedMap<K, V>) => void, thisArg?: any): void {
 		const state = this._state;
 		let current = this._head;
@@ -358,6 +367,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		}
 	}
 
+	// @ts-ignore
 	keys(): IterableIterator<K> {
 		const map = this;
 		const state = this._state;
@@ -382,6 +392,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		return iterator;
 	}
 
+	// @ts-ignore
 	values(): IterableIterator<V> {
 		const map = this;
 		const state = this._state;
@@ -406,6 +417,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		return iterator;
 	}
 
+	// @ts-ignore
 	entries(): IterableIterator<[K, V]> {
 		const map = this;
 		const state = this._state;
@@ -430,6 +442,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		return iterator;
 	}
 
+	// @ts-ignore
 	[Symbol.iterator](): IterableIterator<[K, V]> {
 		return this.entries();
 	}

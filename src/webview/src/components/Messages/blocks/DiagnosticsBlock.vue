@@ -36,7 +36,7 @@ interface Props {
 const props = defineProps<Props>();
 
 function handleClick(diagnostic: DiagnosticsEntry) {
-  if (!props.context) return;
+  if (!props.context) {return;}
 
   props.context.fileOpener.open(diagnostic.filePath, {
     startLine: diagnostic.line,

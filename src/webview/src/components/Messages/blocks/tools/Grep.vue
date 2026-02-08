@@ -127,7 +127,7 @@ const hasFlags = computed(() => {
 
 // 解析搜索结果
 const resultFiles = computed(() => {
-  if (!props.toolResult?.content) return [];
+  if (!props.toolResult?.content) {return [];}
 
   const content = props.toolResult.content;
 

@@ -174,12 +174,12 @@ function handleKeydown(event: KeyboardEvent) {
 
 // 监听点击外部取消编辑
 function handleClickOutside(event: MouseEvent) {
-  if (!isEditing.value) return;
+  if (!isEditing.value) {return;}
 
   const target = event.target as HTMLElement;
 
   // 检查是否点击了组件内部
-  if (containerRef.value?.contains(target)) return;
+  if (containerRef.value?.contains(target)) {return;}
 
   // 点击外部，取消编辑
   cancelEdit();

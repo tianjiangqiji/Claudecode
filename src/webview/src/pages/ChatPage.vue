@@ -133,7 +133,7 @@
   import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk';
 
   const runtime = inject(RuntimeKey);
-  if (!runtime) throw new Error('[ChatPage] runtime not provided');
+  if (!runtime) {throw new Error('[ChatPage] runtime not provided');}
 
   const toolContext = computed<ToolContext>(() => ({
     fileOpener: {
@@ -193,7 +193,7 @@
   // 估算 Token 使用占比（基于 usageData）
   const progressPercentage = computed(() => {
     const s = session.value;
-    if (!s) return 0;
+    if (!s) {return 0;}
 
     const usage = s.usageData.value;
     const total = usage.totalTokens;
@@ -224,7 +224,7 @@
 
   function isNearBottom(): boolean {
     const el = containerEl.value;
-    if (!el) return true;
+    if (!el) {return true;}
     // 距离底部 80px 以内视为「在底部」
     return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   }
@@ -242,9 +242,9 @@
   }
 
   function scrollToBottom(force = false): void {
-    if (!force && userScrolledUp.value) return;
+    if (!force && userScrolledUp.value) {return;}
     const end = endEl.value;
-    if (!end) return;
+    if (!end) {return;}
     requestAnimationFrame(() => {
       try {
         end.scrollIntoView({ block: 'end' });
@@ -302,7 +302,7 @@
   });
 
   async function createNew(): Promise<void> {
-    if (!runtime) return;
+    if (!runtime) {return;}
 
     // 1. 先尝试通过 appContext.startNewConversationTab 创建新标签（多标签模式）
     if (runtime.appContext.startNewConversationTab()) {
@@ -324,7 +324,7 @@
   async function handleSubmit(content: string) {
     const s = session.value;
     const trimmed = (content || '').trim();
-    if (!s || (!trimmed && attachments.value.length === 0) || isBusy.value) return;
+    if (!s || (!trimmed && attachments.value.length === 0) || isBusy.value) {return;}
 
     hasCompleted.value = false;
 
@@ -352,7 +352,7 @@
   // 点击队列消息：取消排队，返回输入框编辑
   function editQueueMessage(idx: number) {
     const msg = messageQueue.value[idx];
-    if (!msg) return;
+    if (!msg) {return;}
     messageQueue.value.splice(idx, 1);
     if (chatInputBoxRef.value) {
       chatInputBoxRef.value.setContent(msg);
@@ -362,7 +362,7 @@
 
   // 队列消息上下移动
   function moveQueueMessage(from: number, to: number) {
-    if (to < 0 || to >= messageQueue.value.length) return;
+    if (to < 0 || to >= messageQueue.value.length) {return;}
     const arr = [...messageQueue.value];
     const [item] = arr.splice(from, 1);
     arr.splice(to, 0, item);
@@ -371,9 +371,9 @@
 
   // 从队列发送下一条消息（绕过 isBusy 检查，因为 watcher 已确认 busy=false）
   async function sendNextQueueMessage() {
-    if (messageQueue.value.length === 0) return;
+    if (messageQueue.value.length === 0) {return;}
     const s = session.value;
-    if (!s) return;
+    if (!s) {return;}
 
     const nextMsg = messageQueue.value.shift()!;
     try {
@@ -393,7 +393,7 @@
 
   async function handleToggleThinking() {
     const s = session.value;
-    if (!s) return;
+    if (!s) {return;}
 
     const currentLevel = s.thinkingLevel.value;
     const newLevel = currentLevel === 'off' ? 'default_on' : 'off';
@@ -403,7 +403,7 @@
 
   async function handleModeSelect(mode: PermissionMode) {
     const s = session.value;
-    if (!s) return;
+    if (!s) {return;}
 
     await s.setPermissionMode(mode);
   }
@@ -411,7 +411,7 @@
   // permissionMode.toggle：按固定顺序轮转
   const togglePermissionMode = () => {
     const s = session.value;
-    if (!s) return;
+    if (!s) {return;}
     const order: PermissionMode[] = ['acceptEdits', 'default', 'plan'];
     const cur = (s.permissionMode.value as PermissionMode) ?? 'acceptEdits';
     const idx = Math.max(0, order.indexOf(cur));
@@ -442,7 +442,7 @@
 
   async function handleModelSelect(modelId: string) {
     const s = session.value;
-    if (!s) return;
+    if (!s) {return;}
 
     await s.setModel({ value: modelId });
   }
@@ -456,7 +456,7 @@
   }
 
   async function handleAddAttachment(files: FileList) {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {return;}
 
     try {
       // 将所有文件转换为 AttachmentItem

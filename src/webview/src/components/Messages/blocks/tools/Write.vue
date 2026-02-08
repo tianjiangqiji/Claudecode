@@ -74,7 +74,7 @@ const filePath = computed(() => {
 });
 
 const fileName = computed(() => {
-  if (!filePath.value) return '';
+  if (!filePath.value) {return '';}
   return path.basename(filePath.value);
 });
 
@@ -85,7 +85,7 @@ const content = computed(() => {
 
 // 内容统计
 const contentStats = computed(() => {
-  if (!content.value) return null;
+  if (!content.value) {return null;}
 
   const lines = content.value.split('\n').length;
   const chars = content.value.length;
@@ -95,7 +95,7 @@ const contentStats = computed(() => {
 
 // 行数
 const lineCount = computed(() => {
-  if (!content.value) return 0;
+  if (!content.value) {return 0;}
   return content.value.split('\n').length;
 });
 

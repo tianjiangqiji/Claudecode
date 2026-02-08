@@ -170,6 +170,9 @@ export abstract class BaseTransport {
   getSession(sessionId: string): Promise<any> {
     return this.sendRequest({ type: "get_session_request", sessionId });
   }
+  deleteSession(sessionId: string): Promise<any> {
+    return this.sendRequest({ type: "delete_session_request", sessionId });
+  }
   listFiles(pattern?: string, signal?: AbortSignal): Promise<any> {
     return this.sendRequest({ type: "list_files_request", pattern }, undefined, signal);
   }
@@ -245,13 +248,13 @@ export abstract class BaseTransport {
       this.cancelRequest(requestId);
     };
     if (abortSignal)
-      abortSignal.addEventListener("abort", abortHandler, { once: true });
+      {abortSignal.addEventListener("abort", abortHandler, { once: true });}
 
     return new Promise<TResponse>((resolve, reject) => {
       this.outstandingRequests.set(requestId, { resolve, reject });
       this.send({ type: "request", channelId, requestId, request });
     }).finally(() => {
-      if (abortSignal) abortSignal.removeEventListener("abort", abortHandler);
+      if (abortSignal) {abortSignal.removeEventListener("abort", abortHandler);}
     });
   }
 
@@ -265,17 +268,17 @@ export abstract class BaseTransport {
         switch (message.type) {
           case "io_message": {
             const stream = this.streams.get(message.channelId);
-            if (stream) stream.enqueue(message.message);
+            if (stream) {stream.enqueue(message.message);}
             else
-              console.warn(
+              {console.warn(
                 `[BaseTransport] Missing stream for ${message.channelId}`
-              );
+              );}
             break;
           }
           case "close_channel": {
             const stream = this.streams.get(message.channelId);
             if (stream) {
-              if (message.error) stream.error(new Error(message.error));
+              if (message.error) {stream.error(new Error(message.error));}
               stream.done();
               // 延迟删除，给尾部 io_message/result 留出时间片
               setTimeout(() => {
@@ -299,8 +302,8 @@ export abstract class BaseTransport {
             }
             const response = (message as any).response;
             if (response && (response as any).type === "error")
-              handler.reject(new Error((response as any).error));
-            else handler.resolve(response);
+              {handler.reject(new Error((response as any).error));}
+            else {handler.resolve(response);}
             this.outstandingRequests.delete(message.requestId);
             break;
           }
@@ -311,9 +314,9 @@ export abstract class BaseTransport {
         }
       }
     } catch (error) {
-      for (const stream of this.streams.values()) stream.error(error);
+      for (const stream of this.streams.values()) {stream.error(error);}
     } finally {
-      for (const stream of this.streams.values()) stream.done();
+      for (const stream of this.streams.values()) {stream.done();}
       this.streams.clear();
     }
   }
@@ -330,7 +333,7 @@ export abstract class BaseTransport {
         break;
       }
       case "insert_at_mention": {
-        if (this.isVisible()) this.atMentionEvents.emit(req.text);
+        if (this.isVisible()) {this.atMentionEvents.emit(req.text);}
         break;
       }
       case "selection_changed": {

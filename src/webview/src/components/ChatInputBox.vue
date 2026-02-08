@@ -263,18 +263,18 @@ function placeCaretAtEnd(node: HTMLElement) {
 
 // 获取光标的客户端矩形
 function getCaretClientRect(editable: HTMLElement | null): DOMRect | undefined {
-  if (!editable) return undefined
+  if (!editable) {return undefined}
 
   const sel = window.getSelection()
-  if (!sel || sel.rangeCount === 0) return undefined
+  if (!sel || sel.rangeCount === 0) {return undefined}
 
   const range = sel.getRangeAt(0).cloneRange()
-  if (!editable.contains(range.startContainer)) return undefined
+  if (!editable.contains(range.startContainer)) {return undefined}
 
   // collapsed range 一般有 0 宽度，但有行高；用 getClientRects 优先
   const rects = range.getClientRects()
   const rect = rects[0] || range.getBoundingClientRect()
-  if (!rect) return undefined
+  if (!rect) {return undefined}
 
   // 兜底行高，避免 0 高导致 Dropdown 内部计算异常
   const lh = parseFloat(getComputedStyle(editable).lineHeight || '0') || 16
@@ -313,7 +313,7 @@ function updateDropdownPosition(
   anchor: 'caret' | 'queryStart' = 'queryStart'
 ) {
   const el = textareaRef.value
-  if (!el) return
+  if (!el) {return}
 
   let rect: DOMRect | undefined
 
@@ -374,7 +374,7 @@ function handleInput(event: Event) {
 }
 
 function autoResizeTextarea() {
-  if (!textareaRef.value) return
+  if (!textareaRef.value) {return}
 
   nextTick(() => {
     const divElement = textareaRef.value!
@@ -496,7 +496,7 @@ function handlePaste(event: ClipboardEvent) {
 
 function getWorkspaceRoot(): string | undefined {
   const r = runtime as any
-  if (!r) return undefined
+  if (!r) {return undefined}
 
   try {
     const sessionStore = r.sessionStore
@@ -524,7 +524,7 @@ function getWorkspaceRoot(): string | undefined {
 
 function toWorkspaceRelativePath(absoluteOrMixedPath: string): string {
   const root = getWorkspaceRoot()
-  if (!root) return absoluteOrMixedPath
+  if (!root) {return absoluteOrMixedPath}
 
   const normRoot = root.replace(/\\/g, '/').replace(/\/+$/, '')
   let normPath = absoluteOrMixedPath.replace(/\\/g, '/')
@@ -547,11 +547,11 @@ function toWorkspaceRelativePath(absoluteOrMixedPath: string): string {
 
 function isFileDrop(event: DragEvent): boolean {
   const dataTransfer = event.dataTransfer
-  if (!dataTransfer) return false
+  if (!dataTransfer) {return false}
 
   const types = Array.from(dataTransfer.types || [])
-  if (types.includes('Files')) return true
-  if (types.includes('text/uri-list')) return true
+  if (types.includes('Files')) {return true}
+  if (types.includes('text/uri-list')) {return true}
 
   return false
 }
@@ -599,17 +599,17 @@ async function statPaths(
   paths: string[]
 ): Promise<Record<string, 'file' | 'directory' | 'other' | 'not_found'>> {
   const result: Record<string, 'file' | 'directory' | 'other' | 'not_found'> = {}
-  if (!paths.length) return result
+  if (!paths.length) {return result}
 
   const r = runtime as any
-  if (!r) return result
+  if (!r) {return result}
 
   try {
     const connection = await r.connectionManager.get()
     const response = await connection.statPaths(paths)
     const entries = (response?.entries ?? []) as Array<{ path: string; type: any }>
     for (const entry of entries) {
-      if (!entry || typeof entry.path !== 'string') continue
+      if (!entry || typeof entry.path !== 'string') {continue}
       const t = entry.type
       if (t === 'file' || t === 'directory' || t === 'other' || t === 'not_found') {
         result[entry.path] = t
@@ -624,11 +624,11 @@ async function statPaths(
 
 function isImageDrop(event: DragEvent): boolean {
   const dataTransfer = event.dataTransfer
-  if (!dataTransfer) return false
-  if (!dataTransfer.types.includes('Files')) return false
+  if (!dataTransfer) {return false}
+  if (!dataTransfer.types.includes('Files')) {return false}
   // 检查是否有图片文件
   for (const item of Array.from(dataTransfer.items || [])) {
-    if (item.kind === 'file' && item.type.startsWith('image/')) return true
+    if (item.kind === 'file' && item.type.startsWith('image/')) {return true}
   }
   return false
 }
@@ -652,7 +652,7 @@ function extractAbsolutePathsFromDataTransfer(dataTransfer: DataTransfer): strin
       paths.push(fileWithPath.path)
     }
   }
-  if (paths.length > 0) return paths
+  if (paths.length > 0) {return paths}
 
   // 2. 从 text/uri-list 获取路径
   const uriList = dataTransfer.getData('text/uri-list')
@@ -664,7 +664,7 @@ function extractAbsolutePathsFromDataTransfer(dataTransfer: DataTransfer): strin
         if (url.protocol === 'file:') {
           let p = decodeURIComponent(url.pathname)
           // Windows 路径处理
-          if (/^\/[A-Za-z]:/.test(p)) p = p.substring(1)
+          if (/^\/[A-Za-z]:/.test(p)) {p = p.substring(1)}
           paths.push(p)
         }
       } catch {
@@ -672,7 +672,7 @@ function extractAbsolutePathsFromDataTransfer(dataTransfer: DataTransfer): strin
       }
     }
   }
-  if (paths.length > 0) return paths
+  if (paths.length > 0) {return paths}
 
   // 3. 从 text/plain 回退
   const textPlain = dataTransfer.getData('text/plain')
@@ -691,7 +691,7 @@ function extractAbsolutePathsFromDataTransfer(dataTransfer: DataTransfer): strin
 
 async function handleDrop(event: DragEvent) {
   const dataTransfer = event.dataTransfer
-  if (!dataTransfer) return
+  if (!dataTransfer) {return}
 
   event.preventDefault()
   event.stopPropagation()
@@ -704,16 +704,16 @@ async function handleDrop(event: DragEvent) {
   // 图片文件：作为附件添加
   if (imageFiles.length > 0) {
     const dt = new DataTransfer()
-    for (const f of imageFiles) dt.items.add(f)
+    for (const f of imageFiles) {dt.items.add(f)}
     handleAddFiles(dt.files)
     // 如果只有图片，直接返回
-    if (nonImageFiles.length === 0 && !dataTransfer.getData('text/uri-list')) return
+    if (nonImageFiles.length === 0 && !dataTransfer.getData('text/uri-list')) {return}
   }
 
   // Shift + 拖拽：使用 @mention（工作区相对路径）
   if (event.shiftKey && isFileDrop(event)) {
     const paths = extractFilePathsFromDataTransfer(dataTransfer)
-    if (paths.length === 0) return
+    if (paths.length === 0) {return}
 
     const types = await statPaths(paths)
 
@@ -759,7 +759,7 @@ function insertTextToInput(text: string) {
 }
 
 function handleSubmit() {
-  if (!content.value.trim()) return
+  if (!content.value.trim()) {return}
 
   if (props.conversationWorking) {
     // 对话工作中，添加到队列
@@ -786,7 +786,7 @@ function handleStop() {
 }
 
 function handleMention(filePath?: string) {
-  if (!filePath) return
+  if (!filePath) {return}
 
   // 在光标位置插入 @文件路径
   const updatedContent = content.value + `@${filePath} `
@@ -817,7 +817,7 @@ function handleRemoveAttachment(id: string) {
 
 // 监听光标位置变化（仅在下拉菜单已打开时更新位置，避免重复触发请求）
 function handleSelectionChange() {
-  if (!content.value || !textareaRef.value) return
+  if (!content.value || !textareaRef.value) {return}
 
   // 仅在下拉菜单已打开时更新位置
   // 避免重复调用 evaluateQuery（已在 handleInput 中调用）

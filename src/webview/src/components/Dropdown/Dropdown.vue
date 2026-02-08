@@ -102,7 +102,6 @@ const emit = defineEmits<Emits>()
 
 const searchInput = ref<HTMLInputElement>()
 const searchTerm = ref('')
-const selectedIndex = ref(0)
 const scrollableRef = ref<any>()
 const containerRef = ref<HTMLElement>()
 
@@ -203,7 +202,7 @@ function onSearchInput() {
 
 // 键盘导航
 function handleKeydown(event: KeyboardEvent) {
-  if (!props.isVisible) return
+  if (!props.isVisible) {return}
 
   switch (event.key) {
     case 'Escape':
@@ -215,12 +214,12 @@ function handleKeydown(event: KeyboardEvent) {
 
 // 点击外部关闭
 function handleClickOutside(event: MouseEvent) {
-  if (!props.isVisible || !props.closeOnClickOutside) return
+  if (!props.isVisible || !props.closeOnClickOutside) {return}
 
   const target = event.target as HTMLElement
 
   // 检查是否点击了下拉菜单内部
-  if (target.closest('.dropdown-popover')) return
+  if (target.closest('.dropdown-popover')) {return}
 
   // 检查是否点击了触发器元素
   const excludeSelectors = [
@@ -230,7 +229,7 @@ function handleClickOutside(event: MouseEvent) {
   ]
 
   for (const selector of excludeSelectors) {
-    if (target.closest(selector)) return
+    if (target.closest(selector)) {return}
   }
 
   close()
@@ -257,24 +256,24 @@ onUnmounted(() => {
 
 // 最小位移：确保选中项在可视区域内
 function ensureSelectedVisible() {
-  if (!props.isVisible) return
-  if (props.selectedIndex == null || props.selectedIndex < 0) return
+  if (!props.isVisible) {return}
+  if (props.selectedIndex == null || props.selectedIndex < 0) {return}
 
   const root = containerRef.value
   const scrollable = scrollableRef.value
-  if (!root || !scrollable) return
+  if (!root || !scrollable) {return}
 
   const wrapper = root.querySelector('.scrollable-content-wrapper') as HTMLElement | null
   const content = root.querySelector('.scrollable-content-container') as HTMLElement | null
   const selectedEl = root.querySelector('.dropdown-menu-item[data-is-selected="true"]') as HTMLElement | null
-  if (!wrapper || !content || !selectedEl) return
+  if (!wrapper || !content || !selectedEl) {return}
 
   const padding = props.scrollPadding ?? 6
   const wrapperH = wrapper.clientHeight
   const contentH = content.scrollHeight
 
   // 如果内容不足以滚动，直接返回，避免空白填充
-  if (contentH <= wrapperH + 1) return
+  if (contentH <= wrapperH + 1) {return}
 
   // 当前"滚动量"（通过 transform 推导）
   const contentRect = content.getBoundingClientRect()

@@ -39,7 +39,7 @@ let throttleTimer: ReturnType<typeof setTimeout> | null = null;
 let lastParsedText = '';
 
 function parseMarkdown(text: string) {
-  if (text === lastParsedText) return;
+  if (text === lastParsedText) {return;}
   lastParsedText = text;
   renderedMarkdown.value = marked.parse(text) as string;
 }
@@ -48,10 +48,10 @@ watch(
   () => props.block.text,
   (newText) => {
     // 文本没变化则跳过
-    if (newText === lastParsedText) return;
+    if (newText === lastParsedText) {return;}
 
     // 已有定时器在等待，说明正在流式输出中，跳过本次，等定时器触发
-    if (throttleTimer) return;
+    if (throttleTimer) {return;}
 
     // 立即解析一次（首次或间隔已过）
     parseMarkdown(newText);

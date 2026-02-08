@@ -45,7 +45,7 @@ watch(
     }
 
     // 用户已手动操作过，不再自动收起
-    if (manualToggled) return;
+    if (manualToggled) {return;}
 
     stableTimer = setTimeout(() => {
       stableTimer = null;

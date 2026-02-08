@@ -325,8 +325,8 @@ export class FileSystemService implements IFileSystemService {
 				}
 
 				return results.sort((a, b) => {
-					if (a.type === 'directory' && b.type === 'file') return -1;
-					if (a.type === 'file' && b.type === 'directory') return 1;
+					if (a.type === 'directory' && b.type === 'file') {return -1;}
+					if (a.type === 'file' && b.type === 'directory') {return 1;}
 					return a.name.localeCompare(b.name);
 				});
 			} catch (fallbackError) {
@@ -348,7 +348,7 @@ export class FileSystemService implements IFileSystemService {
 			const firstLevel = filePath.split(path.sep)[0];
 			if (firstLevel) {
 				topLevelSet.add(firstLevel);
-				if (topLevelSet.size >= maxItems) break;
+				if (topLevelSet.size >= maxItems) {break;}
 			}
 		}
 

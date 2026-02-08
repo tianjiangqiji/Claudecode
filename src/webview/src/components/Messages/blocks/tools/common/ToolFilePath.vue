@@ -24,7 +24,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const fileName = computed(() => {
-  if (!props.filePath) return '';
+  if (!props.filePath) {return '';}
   // 简单的路径解析（跨平台）
   return props.filePath.split('/').pop() || props.filePath.split('\\').pop() || props.filePath;
 });

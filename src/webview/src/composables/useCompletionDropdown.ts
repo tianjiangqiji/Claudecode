@@ -125,7 +125,7 @@ export function useCompletionDropdown<T>(
 
   // === 项列表处理 ===
   const items = computed<DropdownItemType[]>(() => {
-    if (rawItems.value.length === 0) return []
+    if (rawItems.value.length === 0) {return []}
 
     // 转换为 DropdownItem 格式
     const source = (rawItems.value as unknown as T[]) || []
@@ -141,7 +141,7 @@ export function useCompletionDropdown<T>(
 
   // 组织项为分组格式
   function organizeItemsWithSections(items: DropdownItemType[]): DropdownItemType[] {
-    if (!showSectionHeaders) return items
+    if (!showSectionHeaders) {return items}
 
     const result: DropdownItemType[] = []
     const grouped = new Map<string, DropdownItemType[]>()
@@ -162,7 +162,7 @@ export function useCompletionDropdown<T>(
 
     for (const section of sections) {
       const sectionItems = grouped.get(section)
-      if (!sectionItems || sectionItems.length === 0) continue
+      if (!sectionItems || sectionItems.length === 0) {continue}
 
       // 添加分隔符（除第一个）
       if (result.length > 0) {
@@ -237,7 +237,7 @@ export function useCompletionDropdown<T>(
 
   // === inline 模式：查询评估 ===
   function evaluateQuery(text: string, caretOffset?: number) {
-    if (mode !== 'inline' || !triggerDetection) return
+    if (mode !== 'inline' || !triggerDetection) {return}
 
     // 获取光标位置
     const caret = caretOffset ?? triggerDetection.getCaretOffset(anchorElement?.value || null)
@@ -304,7 +304,7 @@ export function useCompletionDropdown<T>(
   function handleSearch(term: string) {
     query.value = term
     activeIndex.value = 0
-    if (debounceTimer) window.clearTimeout(debounceTimer)
+    if (debounceTimer) {window.clearTimeout(debounceTimer)}
     debounceTimer = window.setTimeout(() => {
       void loadItems(term)
     }, 120)
@@ -322,7 +322,7 @@ export function useCompletionDropdown<T>(
   }
 
   function selectIndex(index: number) {
-    if (index < 0 || index >= navigableItems.value.length) return
+    if (index < 0 || index >= navigableItems.value.length) {return}
     activeIndex.value = index
     const item = navigableItems.value[index] as unknown as T
     if (item != null) {
@@ -335,11 +335,11 @@ export function useCompletionDropdown<T>(
   // inline 模式已在 evaluateQuery 中调用 loadItemsDebounced，避免重复触发
   watch(query, (newQuery) => {
     // inline 模式不再通过 watch 触发加载，防止重复调用
-    if (mode === 'inline') return
+    if (mode === 'inline') {return}
     // manual 模式由 handleSearch 触发
-    if (mode === 'manual') return
+    if (mode === 'manual') {return}
 
-    if (isOpen.value) void loadItems(newQuery)
+    if (isOpen.value) {void loadItems(newQuery)}
   })
 
   // === 列表变化时收敛选中索引，避免越界 ===
@@ -349,8 +349,8 @@ export function useCompletionDropdown<T>(
       activeIndex.value = -1
       return
     }
-    if (activeIndex.value < 0) activeIndex.value = 0
-    if (activeIndex.value >= len) activeIndex.value = len - 1
+    if (activeIndex.value < 0) {activeIndex.value = 0}
+    if (activeIndex.value >= len) {activeIndex.value = len - 1}
   })
 
   return {

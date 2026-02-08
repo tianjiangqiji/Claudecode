@@ -29,6 +29,10 @@ import { AsyncStream, ITransport } from './transport';
 import { HandlerContext } from './handlers/types';
 import { IWebViewService } from '../webViewService';
 import { ILLMProviderService } from '../llm/ILLMProvider';
+import { DEFAULT_MODELS } from '../llm/types';
+import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs/promises';
 
 // 消息类型导入
 import type {
@@ -66,6 +70,7 @@ import {
     handleOpenDiff,
     handleListSessions,
     handleGetSession,
+    handleDeleteSession,
     handleExec,
     handleListFiles,
     handleStatPath,
@@ -390,7 +395,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             const query = await this.spawnClaude(
                 inputStream,
                 resume,
-                async (toolName, input, options) => {
+                async (toolName: string, input: any, options: any) => {
                     // 自动允许所有工具执行，不弹窗询问用户
                     this.logService.info(`🔧 自动允许工具: ${toolName}`);
                     return {
@@ -770,6 +775,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
                 const status = this.llmProviderService.getStatus();
                 const models = this.llmProviderService.getAvailableModels();
                 const allModels = this.llmProviderService.getAllModels();
+                const sdkDefaults = await this.getClaudeConfigDefaults();
                 return {
                     type: "get_provider_status_response",
                     provider: status.type,
@@ -778,10 +784,15 @@ export class ClaudeAgentService implements IClaudeAgentService {
                     apiKeyMasked: status.apiKeyMasked,
                     baseUrl: status.baseUrl,
                     currentModel: status.currentModel,
+                    defaultHaikuModel: this.configService.getValue<string>('claudix.defaultHaikuModel', ''),
+                    defaultOpusModel: this.configService.getValue<string>('claudix.defaultOpusModel', ''),
+                    defaultSonnetModel: this.configService.getValue<string>('claudix.defaultSonnetModel', ''),
+                    reasoningModel: this.configService.getValue<string>('claudix.reasoningModel', ''),
                     customModels: status.customModels,
                     extraHeaders: status.extraHeaders,
                     appendRule: this.configService.getValue<string>('claudix.appendRule', ''),
                     appendRuleEnabled: this.configService.getValue<boolean>('claudix.appendRuleEnabled', true),
+                    sdkDefaults,
                     models: models.map(m => ({
                         value: m.id,
                         label: m.label,
@@ -808,6 +819,9 @@ export class ClaudeAgentService implements IClaudeAgentService {
 
             case "get_session_request":
                 return handleGetSession(request, this.handlerContext);
+
+            case "delete_session_request":
+                return handleDeleteSession(request as any, this.handlerContext);
 
         // 文件操作
         case "list_files_request":
@@ -948,6 +962,156 @@ export class ClaudeAgentService implements IClaudeAgentService {
      */
     private getMaxThinkingTokens(level: string): number {
         return level === 'off' ? 0 : 31999;
+    }
+
+    private async getClaudeConfigDefaults(): Promise<{
+        apiKeyMasked?: string;
+        baseUrl?: string;
+        defaultHaikuModel?: string;
+        defaultOpusModel?: string;
+        defaultSonnetModel?: string;
+        reasoningModel?: string;
+    }> {
+        const configDir = process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
+        const files = [
+            path.join(configDir, "config.json"),
+            path.join(configDir, "settings.json"),
+            path.join(configDir, "settings.local.json"),
+        ];
+        const sources = (await Promise.all(files.map(filePath => this.readJsonFile(filePath)))).filter(Boolean) as any[];
+
+        const apiKey = this.findValueFromSources(sources, [
+            "apiKey",
+            "api_key",
+            "anthropicApiKey",
+            "anthropic_api_key",
+            "ANTHROPIC_API_KEY",
+        ]);
+        const baseUrl = this.findValueFromSources(sources, [
+            "baseUrl",
+            "base_url",
+            "anthropicBaseUrl",
+            "anthropic_base_url",
+            "ANTHROPIC_BASE_URL",
+        ]);
+        const defaultHaikuModel = this.findValueFromSources(sources, [
+            "defaultHaikuModel",
+            "default_haiku_model",
+            "anthropicDefaultHaikuModel",
+            "anthropic_default_haiku_model",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+        ]);
+        const defaultSonnetModel = this.findValueFromSources(sources, [
+            "defaultSonnetModel",
+            "default_sonnet_model",
+            "anthropicDefaultSonnetModel",
+            "anthropic_default_sonnet_model",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        ]);
+        const defaultOpusModel = this.findValueFromSources(sources, [
+            "defaultOpusModel",
+            "default_opus_model",
+            "anthropicDefaultOpusModel",
+            "anthropic_default_opus_model",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        ]);
+        const reasoningModel = this.findValueFromSources(sources, [
+            "reasoningModel",
+            "reasoning_model",
+            "anthropicReasoningModel",
+            "anthropic_reasoning_model",
+            "ANTHROPIC_REASONING_MODEL",
+        ]);
+
+        const builtInDefaults = DEFAULT_MODELS['claude-code'] || [];
+        const fallbackHaiku = this.findDefaultModelId(builtInDefaults, 'haiku');
+        const fallbackSonnet = this.findDefaultModelId(builtInDefaults, 'sonnet');
+        const fallbackOpus = this.findDefaultModelId(builtInDefaults, 'opus');
+
+        return {
+            apiKeyMasked: apiKey ? this.maskApiKey(apiKey) : undefined,
+            baseUrl,
+            defaultHaikuModel: defaultHaikuModel || fallbackHaiku,
+            defaultOpusModel: defaultOpusModel || fallbackOpus,
+            defaultSonnetModel: defaultSonnetModel || fallbackSonnet,
+            reasoningModel,
+        };
+    }
+
+    private async readJsonFile(filePath: string): Promise<any | null> {
+        try {
+            const content = await fs.readFile(filePath, "utf8");
+            return JSON.parse(content);
+        } catch {
+            return null;
+        }
+    }
+
+    private findValueFromSources(sources: any[], keys: string[]): string | undefined {
+        const keySet = new Set(keys);
+        for (let i = sources.length - 1; i >= 0; i -= 1) {
+            const value = this.findValueInObject(sources[i], keySet);
+            if (value !== undefined) {
+                return value;
+            }
+        }
+        return undefined;
+    }
+
+    private findValueInObject(obj: any, keys: Set<string>): string | undefined {
+        if (!obj || typeof obj !== "object") {
+            return undefined;
+        }
+
+        const stack: any[] = [obj];
+        const visited = new Set<any>();
+
+        while (stack.length > 0) {
+            const current = stack.pop();
+            if (!current || typeof current !== "object") {
+                continue;
+            }
+            if (visited.has(current)) {
+                continue;
+            }
+            visited.add(current);
+
+            for (const [key, value] of Object.entries(current)) {
+                if (keys.has(key)) {
+                    if (value !== undefined && value !== null && value !== "") {
+                        return String(value);
+                    }
+                }
+                if (value && typeof value === "object") {
+                    stack.push(value as any);
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    private maskApiKey(value: string): string {
+        if (!value) {
+            return "";
+        }
+        if (value.length <= 8) {
+            return "****";
+        }
+        return `${value.slice(0, 4)}****${value.slice(-4)}`;
+    }
+
+    private findDefaultModelId(
+        models: Array<{ id: string; label?: string }>,
+        keyword: string
+    ): string | undefined {
+        const lower = keyword.toLowerCase();
+        const match = models.find(model => model.id.toLowerCase().includes(lower));
+        if (match) {
+            return match.id;
+        }
+        const labelMatch = models.find(model => (model.label || '').toLowerCase().includes(lower));
+        return labelMatch?.id;
     }
 
     /**

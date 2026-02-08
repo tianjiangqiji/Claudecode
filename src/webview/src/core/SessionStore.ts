@@ -171,6 +171,20 @@ export class SessionStore {
     await this.currentConnectionPromise;
   }
 
+  async deleteSession(sessionId: string): Promise<boolean> {
+    const connection = await this.getConnection();
+    const response = await connection.deleteSession(sessionId);
+    if (response?.success) {
+      const remaining = this.sessions().filter(session => session.sessionId() !== sessionId);
+      this.sessions(remaining);
+      if (this.activeSession()?.sessionId() === sessionId) {
+        this.activeSession(undefined);
+      }
+      return true;
+    }
+    return false;
+  }
+
   setActiveSession(session: Session | undefined): void {
     this.activeSession(session);
   }

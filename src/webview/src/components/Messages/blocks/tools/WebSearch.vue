@@ -71,7 +71,7 @@ const blockedDomains = computed(() => {
 // 只有在有域名过滤信息或有错误时才有可展开内容
 const hasExpandableContent = computed(() => {
   // 有错误时可展开
-  if (props.toolResult?.is_error) return true;
+  if (props.toolResult?.is_error) {return true;}
 
   // 有域名过滤信息时可展开
   const hasFilters = (allowedDomains.value && allowedDomains.value.length > 0) ||

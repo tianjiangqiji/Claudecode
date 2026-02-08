@@ -91,19 +91,19 @@ const isPermissionRequest = computed(() => {
 // 权限请求阶段默认展开,执行完成后不展开
 const shouldExpand = computed(() => {
   // 权限请求阶段展开
-  if (isPermissionRequest.value && hasParams.value) return true;
+  if (isPermissionRequest.value && hasParams.value) {return true;}
 
   // 有错误时展开
-  if (props.toolResult?.is_error) return true;
+  if (props.toolResult?.is_error) {return true;}
 
   return false;
 });
 
 function formatValue(value: any): string {
-  if (value === null) return 'null';
-  if (value === undefined) return 'undefined';
-  if (typeof value === 'boolean') return value ? 'true' : 'false';
-  if (typeof value === 'string') return value;
+  if (value === null) {return 'null';}
+  if (value === undefined) {return 'undefined';}
+  if (typeof value === 'boolean') {return value ? 'true' : 'false';}
+  if (typeof value === 'string') {return value;}
   if (typeof value === 'object') {
     return JSON.stringify(value, null, 2);
   }
@@ -111,12 +111,12 @@ function formatValue(value: any): string {
 }
 
 function getValueClass(value: any): string {
-  if (typeof value === 'boolean') return 'value-boolean';
-  if (typeof value === 'number') return 'value-number';
-  if (typeof value === 'object') return 'value-object';
+  if (typeof value === 'boolean') {return 'value-boolean';}
+  if (typeof value === 'number') {return 'value-number';}
+  if (typeof value === 'object') {return 'value-object';}
   if (typeof value === 'string') {
-    if (value.startsWith('/') || value.includes('\\')) return 'value-path';
-    if (value.includes('http')) return 'value-url';
+    if (value.startsWith('/') || value.includes('\\')) {return 'value-path';}
+    if (value.includes('http')) {return 'value-url';}
   }
   return 'value-string';
 }

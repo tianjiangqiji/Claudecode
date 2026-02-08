@@ -26,13 +26,13 @@ export function getSlashCommands(
   runtime: RuntimeInstance | undefined,
   _signal?: AbortSignal
 ): CommandAction[] {
-  if (!runtime) return []
+  if (!runtime) {return []}
 
   const commandsBySection = runtime.appContext.commandRegistry.getCommandsBySection()
   const allCommands = commandsBySection['Slash Commands'] || []
 
   // 如果没有查询，返回所有命令
-  if (!query || !query.trim()) return allCommands
+  if (!query || !query.trim()) {return allCommands}
 
   // 过滤命令：匹配 label 或 description
   const lowerQuery = query.toLowerCase()
@@ -53,7 +53,7 @@ export function getSlashCommandsWithSection(
   query: string,
   runtime: RuntimeInstance | undefined
 ): CommandWithSection[] {
-  if (!runtime) return []
+  if (!runtime) {return []}
 
   const commandsBySection = runtime.appContext.commandRegistry.getCommandsBySection()
   const results: CommandWithSection[] = []
@@ -63,7 +63,7 @@ export function getSlashCommandsWithSection(
   // 遍历分组
   for (const section of SECTION_ORDER) {
     const commands = commandsBySection[section]
-    if (!commands || commands.length === 0) continue
+    if (!commands || commands.length === 0) {continue}
 
     // 过滤命令
     const lowerQuery = query.toLowerCase()

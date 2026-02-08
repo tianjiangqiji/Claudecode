@@ -1,10 +1,10 @@
 export function normalizeKeystroke(e: KeyboardEvent): string {
   const parts: string[] = []
-  if (e.ctrlKey) parts.push('ctrl')
+  if (e.ctrlKey) {parts.push('ctrl')}
   // On mac, metaKey 作为 cmd
-  if (e.metaKey) parts.push('cmd')
-  if (e.altKey) parts.push('alt')
-  if (e.shiftKey) parts.push('shift')
+  if (e.metaKey) {parts.push('cmd')}
+  if (e.altKey) {parts.push('alt')}
+  if (e.shiftKey) {parts.push('shift')}
 
   let key = (e.key || '').toLowerCase()
   // 统一特殊键命名
@@ -30,10 +30,10 @@ export function normalizeKeystroke(e: KeyboardEvent): string {
 
 export function isEditableTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null
-  if (!el) return false
+  if (!el) {return false}
   const tag = el.tagName?.toLowerCase()
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true
-  if (el.isContentEditable) return true
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') {return true}
+  if (el.isContentEditable) {return true}
   return false
 }
 

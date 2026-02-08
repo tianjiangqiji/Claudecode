@@ -65,7 +65,7 @@ const editorRef = ref<HTMLElement>()
 const isFocused = ref(false)
 
 const formattedContent = computed(() => {
-  if (!props.modelValue) return ''
+  if (!props.modelValue) {return ''}
   return props.modelValue.replace(/\n/g, '<br>')
 })
 

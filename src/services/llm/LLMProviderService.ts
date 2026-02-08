@@ -83,6 +83,18 @@ export class LLMProviderService implements ILLMProviderService {
         if (config.customModels !== undefined) {
             await this.configService.updateValue('claudix.customModels', config.customModels);
         }
+        if (config.defaultHaikuModel !== undefined) {
+            await this.configService.updateValue('claudix.defaultHaikuModel', config.defaultHaikuModel);
+        }
+        if (config.defaultOpusModel !== undefined) {
+            await this.configService.updateValue('claudix.defaultOpusModel', config.defaultOpusModel);
+        }
+        if (config.defaultSonnetModel !== undefined) {
+            await this.configService.updateValue('claudix.defaultSonnetModel', config.defaultSonnetModel);
+        }
+        if (config.reasoningModel !== undefined) {
+            await this.configService.updateValue('claudix.reasoningModel', config.reasoningModel);
+        }
 
         this.logService.info(`[LLMProviderService] 更新配置: ${JSON.stringify(Object.keys(config))}`);
     }
@@ -132,6 +144,10 @@ export class LLMProviderService implements ILLMProviderService {
             apiKey: this.configService.getValue<string>('claudix.apiKey', ''),
             baseUrl: this.configService.getValue<string>('claudix.baseUrl', ''),
             customModels: this.configService.getValue<CustomModelConfig[]>('claudix.customModels', []),
+            defaultHaikuModel: this.configService.getValue<string>('claudix.defaultHaikuModel', ''),
+            defaultOpusModel: this.configService.getValue<string>('claudix.defaultOpusModel', ''),
+            defaultSonnetModel: this.configService.getValue<string>('claudix.defaultSonnetModel', ''),
+            reasoningModel: this.configService.getValue<string>('claudix.reasoningModel', ''),
         };
     }
 

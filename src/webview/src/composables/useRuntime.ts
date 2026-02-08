@@ -98,16 +98,16 @@ export function useRuntime(): RuntimeInstance {
       const connection = await connectionManager.get();
       try { await connection.opened; } catch (e) { console.error('[runtime] open failed', e); return; }
 
-      if (disposed) return;
+      if (disposed) {return;}
 
       try {
         const selection = await connection.getCurrentSelection();
-        if (!disposed) appContext.currentSelection(selection?.selection ?? undefined);
+        if (!disposed) {appContext.currentSelection(selection?.selection ?? undefined);}
       } catch (e) { console.warn('[runtime] selection fetch failed', e); }
 
       try {
         const assets = await connection.getAssetUris();
-        if (!disposed) appContext.assetUris(assets.assetUris);
+        if (!disposed) {appContext.assetUris(assets.assetUris);}
       } catch (e) { console.warn('[runtime] assets fetch failed', e); }
 
       await sessionStore.listSessions();

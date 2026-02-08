@@ -17,7 +17,7 @@ interface Props {
 const props = defineProps<Props>();
 
 function handleClick() {
-  if (!props.context) return;
+  if (!props.context) {return;}
 
   props.context.fileOpener.open(props.block.filePath);
 }

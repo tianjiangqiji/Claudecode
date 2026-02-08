@@ -136,7 +136,7 @@ export class ClaudeSdkService implements IClaudeSdkService {
                 const lines = data.trim().split('\n');
 
                 for (const line of lines) {
-                    if (!line.trim()) continue;
+                    if (!line.trim()) {continue;}
 
                     // 检测错误级别
                     const lowerLine = line.toLowerCase();
@@ -169,7 +169,7 @@ export class ClaudeSdkService implements IClaudeSdkService {
                 // PreToolUse: 工具执行前
                 PreToolUse: [{
                     matcher: "Edit|Write|MultiEdit",
-                    hooks: [async (input, toolUseID, options) => {
+                    hooks: [async (input: any, toolUseID: string, options: any) => {
                         if ('tool_name' in input) {
                             this.logService.info(`[Hook] PreToolUse: ${input.tool_name}`);
                         }
@@ -179,7 +179,7 @@ export class ClaudeSdkService implements IClaudeSdkService {
                 // PostToolUse: 工具执行后
                 PostToolUse: [{
                     matcher: "Edit|Write|MultiEdit",
-                    hooks: [async (input, toolUseID, options) => {
+                    hooks: [async (input: any, toolUseID: string, options: any) => {
                         if ('tool_name' in input) {
                             this.logService.info(`[Hook] PostToolUse: ${input.tool_name}`);
                         }
@@ -300,6 +300,10 @@ export class ClaudeSdkService implements IClaudeSdkService {
         // 从 claudix 配置读取自定义 API Key 和 Base URL
         const apiKey = this.configService.getValue<string>('claudix.apiKey', '');
         const baseUrl = this.configService.getValue<string>('claudix.baseUrl', '');
+        const defaultHaikuModel = this.configService.getValue<string>('claudix.defaultHaikuModel', '');
+        const defaultOpusModel = this.configService.getValue<string>('claudix.defaultOpusModel', '');
+        const defaultSonnetModel = this.configService.getValue<string>('claudix.defaultSonnetModel', '');
+        const reasoningModel = this.configService.getValue<string>('claudix.reasoningModel', '');
 
         if (apiKey) {
             env.ANTHROPIC_API_KEY = apiKey;
@@ -308,6 +312,22 @@ export class ClaudeSdkService implements IClaudeSdkService {
         if (baseUrl) {
             env.ANTHROPIC_BASE_URL = baseUrl;
             this.logService.info(`[ClaudeSdkService] 使用自定义 Base URL: ${baseUrl}`);
+        }
+        if (defaultHaikuModel) {
+            env.ANTHROPIC_DEFAULT_HAIKU_MODEL = defaultHaikuModel;
+            this.logService.info(`[ClaudeSdkService] 使用自定义 Haiku 模型: ${defaultHaikuModel}`);
+        }
+        if (defaultOpusModel) {
+            env.ANTHROPIC_DEFAULT_OPUS_MODEL = defaultOpusModel;
+            this.logService.info(`[ClaudeSdkService] 使用自定义 Opus 模型: ${defaultOpusModel}`);
+        }
+        if (defaultSonnetModel) {
+            env.ANTHROPIC_DEFAULT_SONNET_MODEL = defaultSonnetModel;
+            this.logService.info(`[ClaudeSdkService] 使用自定义 Sonnet 模型: ${defaultSonnetModel}`);
+        }
+        if (reasoningModel) {
+            env.ANTHROPIC_REASONING_MODEL = reasoningModel;
+            this.logService.info(`[ClaudeSdkService] 使用自定义 Reasoning 模型: ${reasoningModel}`);
         }
 
         // 用户自定义环境变量（优先级最高，可覆盖上面的值）

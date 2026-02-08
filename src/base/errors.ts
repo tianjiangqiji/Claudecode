@@ -141,7 +141,7 @@ export function transformErrorForSerialization(error: any): any;
 export function transformErrorForSerialization(error: any): any {
 	if (error instanceof Error) {
 		const { name, message, cause } = error;
-		// eslint-disable-next-line local/code-no-any-casts
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const stack: string = (<any>error).stacktrace || (<any>error).stack;
 		return {
 			$isError: true,

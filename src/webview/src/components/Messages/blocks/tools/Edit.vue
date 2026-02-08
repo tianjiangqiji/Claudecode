@@ -94,7 +94,7 @@ const filePath = computed(() => {
 });
 
 const fileName = computed(() => {
-  if (!filePath.value) return '';
+  if (!filePath.value) {return '';}
   return path.basename(filePath.value);
 });
 
@@ -188,15 +188,15 @@ function generatePatchFromInput(oldStr: string, newStr: string): any[] {
 
 // 计算 diff 统计
 const diffStats = computed(() => {
-  if (!structuredPatch.value) return null;
+  if (!structuredPatch.value) {return null;}
 
   let added = 0;
   let removed = 0;
 
   structuredPatch.value.forEach((patch: any) => {
     patch.lines.forEach((line: string) => {
-      if (line.startsWith('+')) added++;
-      if (line.startsWith('-')) removed++;
+      if (line.startsWith('+')) {added++;}
+      if (line.startsWith('-')) {removed++;}
     });
   });
 
@@ -205,8 +205,8 @@ const diffStats = computed(() => {
 
 // 获取 diff 行的类型类名
 function getDiffLineClass(line: string): string {
-  if (line.startsWith('-')) return 'diff-line-delete';
-  if (line.startsWith('+')) return 'diff-line-add';
+  if (line.startsWith('-')) {return 'diff-line-delete';}
+  if (line.startsWith('+')) {return 'diff-line-add';}
   return 'diff-line-context';
 }
 
@@ -227,13 +227,14 @@ function getLineContent(line: string): string {
 }
 
 // 计算行号（删除行显示旧行号，添加行显示新行号）
-function getLineNumber(patch: any, lineIndex: number): string {
-  const currentLine = patch.lines[lineIndex];
+function getLineNumber(patch: any, lineIndex: number | string): string {
+  const idx = Number(lineIndex);
+  const currentLine = patch.lines[idx];
 
   if (currentLine.startsWith('-')) {
     // 删除行：显示旧行号
     let oldLine = patch.oldStart;
-    for (let i = 0; i < lineIndex; i++) {
+    for (let i = 0; i < idx; i++) {
       const line = patch.lines[i];
       if (!line.startsWith('+')) {
         oldLine++;
@@ -243,7 +244,7 @@ function getLineNumber(patch: any, lineIndex: number): string {
   } else if (currentLine.startsWith('+')) {
     // 添加行：显示新行号
     let newLine = patch.newStart;
-    for (let i = 0; i < lineIndex; i++) {
+    for (let i = 0; i < idx; i++) {
       const line = patch.lines[i];
       if (!line.startsWith('-')) {
         newLine++;
@@ -253,7 +254,7 @@ function getLineNumber(patch: any, lineIndex: number): string {
   } else {
     // 上下文行：显示新行号
     let newLine = patch.newStart;
-    for (let i = 0; i < lineIndex; i++) {
+    for (let i = 0; i < idx; i++) {
       const line = patch.lines[i];
       if (!line.startsWith('-')) {
         newLine++;

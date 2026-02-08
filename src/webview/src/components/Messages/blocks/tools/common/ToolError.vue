@@ -32,8 +32,8 @@ const errorContent = computed(() => {
   if (Array.isArray(content)) {
     return content
       .map(item => {
-        if (typeof item === 'string') return item;
-        if (item.type === 'text') return item.text;
+        if (typeof item === 'string') {return item;}
+        if (item.type === 'text') {return item.text;}
         return JSON.stringify(item);
       })
       .join('\n');

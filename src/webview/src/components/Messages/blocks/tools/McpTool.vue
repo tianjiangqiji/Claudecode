@@ -87,7 +87,7 @@ const formattedInput = computed(() => {
 
 // 输出结果
 const hasOutput = computed(() => {
-  if (props.toolResult?.is_error) return false;
+  if (props.toolResult?.is_error) {return false;}
 
   // 会话加载
   if (props.toolUseResult?.output) {
@@ -149,7 +149,7 @@ const formattedOutput = computed(() => {
 
 // 错误信息
 const errorMessage = computed(() => {
-  if (!props.toolResult?.is_error) return '';
+  if (!props.toolResult?.is_error) {return '';}
 
   const content = props.toolResult.content;
 
@@ -170,10 +170,10 @@ const errorMessage = computed(() => {
 // 是否自动展开
 const shouldExpand = computed(() => {
   // 有错误时展开
-  if (props.toolResult?.is_error) return true;
+  if (props.toolResult?.is_error) {return true;}
 
   // 有输出时展开
-  if (hasOutput.value) return true;
+  if (hasOutput.value) {return true;}
 
   return false;
 });

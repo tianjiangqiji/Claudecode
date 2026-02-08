@@ -55,7 +55,7 @@ const plan = computed(() => {
 
 // 使用marked渲染Markdown
 const renderedPlan = computed(() => {
-  if (!plan.value) return '';
+  if (!plan.value) {return '';}
   return marked(plan.value);
 });
 

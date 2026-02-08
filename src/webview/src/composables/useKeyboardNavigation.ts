@@ -35,7 +35,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
    * 移动到下一项
    */
   function moveNext() {
-    if (items.value.length === 0) return
+    if (items.value.length === 0) {return}
     activeIndex.value = (activeIndex.value + 1) % items.value.length
     onNavigate?.() // 触发导航回调
   }
@@ -44,7 +44,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
    * 移动到上一项
    */
   function movePrev() {
-    if (items.value.length === 0) return
+    if (items.value.length === 0) {return}
     activeIndex.value =
       (activeIndex.value - 1 + items.value.length) % items.value.length
     onNavigate?.() // 触发导航回调
@@ -54,7 +54,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
    * 向下翻页
    */
   function moveNextPage() {
-    if (items.value.length === 0) return
+    if (items.value.length === 0) {return}
     const newIndex = Math.min(activeIndex.value + pageSize, items.value.length - 1)
     activeIndex.value = newIndex
     onNavigate?.() // 触发导航回调
@@ -64,7 +64,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
    * 向上翻页
    */
   function movePrevPage() {
-    if (items.value.length === 0) return
+    if (items.value.length === 0) {return}
     const newIndex = Math.max(activeIndex.value - pageSize, 0)
     activeIndex.value = newIndex
     onNavigate?.() // 触发导航回调
@@ -74,7 +74,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
    * 选择当前激活的项
    */
   function selectActive() {
-    if (items.value.length === 0) return
+    if (items.value.length === 0) {return}
     onSelect(activeIndex.value)
   }
 

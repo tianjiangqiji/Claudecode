@@ -36,16 +36,48 @@
           "default": "",
           "description": "自定义 Base URL（注入 ANTHROPIC_BASE_URL 环境变量，用于反代/自部署）"
         },
+        "claudix.defaultHaikuModel": {
+          "type": "string",
+          "default": "",
+          "description": "默认 Haiku 模型 ID（注入 ANTHROPIC_DEFAULT_HAIKU_MODEL 环境变量）"
+        },
+        "claudix.defaultOpusModel": {
+          "type": "string",
+          "default": "",
+          "description": "默认 Opus 模型 ID（注入 ANTHROPIC_DEFAULT_OPUS_MODEL 环境变量）"
+        },
+        "claudix.defaultSonnetModel": {
+          "type": "string",
+          "default": "",
+          "description": "默认 Sonnet 模型 ID（注入 ANTHROPIC_DEFAULT_SONNET_MODEL 环境变量）"
+        },
+        "claudix.reasoningModel": {
+          "type": "string",
+          "default": "",
+          "description": "推理模型 ID（注入 ANTHROPIC_REASONING_MODEL 环境变量）"
+        },
         "claudix.customModels": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "id": { "type": "string", "description": "模型 ID（发送给 API）" },
-              "label": { "type": "string", "description": "显示名称" },
-              "description": { "type": "string", "description": "模型描述" }
+              "id": {
+                "type": "string",
+                "description": "模型 ID（发送给 API）"
+              },
+              "label": {
+                "type": "string",
+                "description": "显示名称"
+              },
+              "description": {
+                "type": "string",
+                "description": "模型描述"
+              }
             },
-            "required": ["id", "label"]
+            "required": [
+              "id",
+              "label"
+            ]
           },
           "default": [],
           "description": "自定义模型列表（合并到 SDK 模型选择器）"
@@ -146,6 +178,7 @@
     "concurrently": "^9.2.1",
     "esbuild": "^0.27.1",
     "eslint": "^9.39.1",
+    "eslint-plugin-vue": "^10.7.0",
     "prettier": "^3.7.4",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.21.0",
@@ -153,6 +186,7 @@
     "vite": "^7.2.7",
     "vite-plugin-svg-icons": "^2.0.1",
     "vitest": "^4.0.15",
+    "vue-eslint-parser": "^10.2.0",
     "vue-tsc": "^3.1.7"
   },
   "dependencies": {

@@ -24,9 +24,9 @@ const props = defineProps<Props>();
 const loadError = ref(false);
 
 const imageSrc = computed(() => {
-  if (loadError.value) return null;
+  if (loadError.value) {return null;}
   const source = props.block.source;
-  if (!source || source.type !== 'base64') return null;
+  if (!source || source.type !== 'base64') {return null;}
   return `data:${source.media_type};base64,${source.data}`;
 });
 

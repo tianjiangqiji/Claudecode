@@ -3,15 +3,21 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import * as vscode from 'vscode';
 import { InstantiationService } from '../src/di/instantiationService';
 import { ServiceCollection } from '../src/di/serviceCollection';
+import { InstantiationServiceBuilder } from '../src/di/instantiationServiceBuilder';
 import { registerServices } from '../src/services/serviceRegistry';
-import { ILogService } from '../src/services/log/logService';
+import { ILogService } from '../src/services/logService';
 
 describe('Services', () => {
 	it('should register and retrieve log service', () => {
 		const services = new ServiceCollection();
-		registerServices(services, true);
+		const builder = new InstantiationServiceBuilder(services);
+		const mockContext: any = {
+			extensionMode: vscode.ExtensionMode.Test
+		};
+		registerServices(builder, mockContext);
 
 		const instantiationService = new InstantiationService(services);
 

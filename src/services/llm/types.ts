@@ -26,6 +26,14 @@ export interface ProviderConfig {
     baseUrl?: string;
     /** 默认模型 ID */
     defaultModel?: string;
+    /** 默认 Haiku 模型 */
+    defaultHaikuModel?: string;
+    /** 默认 Opus 模型 */
+    defaultOpusModel?: string;
+    /** 默认 Sonnet 模型 */
+    defaultSonnetModel?: string;
+    /** 推理模型 */
+    reasoningModel?: string;
     /** 自定义模型列表 */
     customModels?: CustomModelConfig[];
     /** 额外的请求头 */

@@ -232,6 +232,10 @@ export interface UpdateProviderConfigRequest {
         apiKey?: string;
         baseUrl?: string;
         defaultModel?: string;
+        defaultHaikuModel?: string;
+        defaultOpusModel?: string;
+        defaultSonnetModel?: string;
+        reasoningModel?: string;
         customModels?: Array<{
             id: string;
             label: string;
@@ -259,8 +263,25 @@ export interface GetProviderStatusResponse {
     provider: string;
     ready: boolean;
     hasApiKey: boolean;
+    apiKeyMasked: string;
     baseUrl: string;
     currentModel: string;
+    defaultHaikuModel?: string;
+    defaultOpusModel?: string;
+    defaultSonnetModel?: string;
+    reasoningModel?: string;
+    customModels?: Array<{ id: string; label: string; description?: string }>;
+    extraHeaders?: Record<string, string>;
+    appendRule?: string;
+    appendRuleEnabled?: boolean;
+    sdkDefaults?: {
+        apiKeyMasked?: string;
+        baseUrl?: string;
+        defaultHaikuModel?: string;
+        defaultOpusModel?: string;
+        defaultSonnetModel?: string;
+        reasoningModel?: string;
+    };
     models: ModelOption[];
     allModels: Record<string, ModelOption[]>;
 }
@@ -344,6 +365,19 @@ export interface GetSessionRequest {
 export interface GetSessionResponse {
     type: "get_session_response";
     messages: any[];
+}
+
+/**
+ * 删除会话
+ */
+export interface DeleteSessionRequest {
+    type: "delete_session_request";
+    sessionId: string;
+}
+
+export interface DeleteSessionResponse {
+    type: "delete_session_response";
+    success: boolean;
 }
 
 /**
@@ -667,6 +701,7 @@ export type WebViewRequest =
     | GetAssetUrisRequest
     | ListSessionsRequest
     | GetSessionRequest
+    | DeleteSessionRequest
     | ExecRequest
     | ListFilesRequest
     | OpenURLRequest
@@ -700,6 +735,7 @@ export type WebViewRequestResponse =
     | GetAssetUrisResponse
     | ListSessionsResponse
     | GetSessionResponse
+    | DeleteSessionResponse
     | ExecResponse
     | ListFilesResponse
     | OpenURLResponse

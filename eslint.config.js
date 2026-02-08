@@ -1,9 +1,10 @@
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
+import pluginVue from 'eslint-plugin-vue';
 
 export default [
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.vue'],
+    files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
@@ -15,11 +16,29 @@ export default [
       '@typescript-eslint': typescriptEslint
     },
     rules: {
-      // 强制所有控制语句使用大括号
       'curly': ['error', 'all'],
-      // TypeScript 相关规则
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
+    }
+  },
+  ...pluginVue.configs['flat/essential'],
+  {
+    files: ['**/*.vue'],
+    languageOptions: {
+      parserOptions: {
+        parser: typescriptParser,
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      }
+    },
+    plugins: {
+      '@typescript-eslint': typescriptEslint
+    },
+    rules: {
+      'curly': ['error', 'all'],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'vue/multi-word-component-names': 'off'
     }
   },
   {

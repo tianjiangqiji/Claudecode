@@ -23,13 +23,13 @@ export function useTriggerDetection(options: TriggerDetectionOptions) {
    * @returns 光标偏移量，失败返回 undefined
    */
   function getCaretOffset(element: HTMLElement | null): number | undefined {
-    if (!element) return undefined
+    if (!element) {return undefined}
 
     const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return undefined
+    if (!selection || selection.rangeCount === 0) {return undefined}
 
     const range = selection.getRangeAt(0)
-    if (!element.contains(range.startContainer)) return undefined
+    if (!element.contains(range.startContainer)) {return undefined}
 
     // 创建一个从元素开始到光标位置的范围
     const preCaretRange = range.cloneRange()

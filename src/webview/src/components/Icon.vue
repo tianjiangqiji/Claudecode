@@ -57,7 +57,7 @@ function resolveLocalId(name: string): string | '' {
   }
 
   for (const id of candidates) {
-    if (svgNames.has(id)) return id;
+    if (svgNames.has(id)) {return id;}
   }
   return '';
 }
@@ -76,7 +76,7 @@ const iconClasses = computed(() => {
 
 // 本地 SVG 是否可用及其 symbolId
 const localSymbolId = computed(() => {
-  if (props.type !== 'mdi') return '';
+  if (props.type !== 'mdi') {return '';}
   const name = String(props.icon || '').trim();
   return resolveLocalId(name);
 });
@@ -85,7 +85,7 @@ const useLocalSvg = computed(() => !!localSymbolId.value);
 
 const svgWrapperClasses = computed(() => {
   const classes = [props.className];
-  if (props.type === 'mdi') classes.push('mdi');
+  if (props.type === 'mdi') {classes.push('mdi');}
   return classes.filter(Boolean);
 });
 

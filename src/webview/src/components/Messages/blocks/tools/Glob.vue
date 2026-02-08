@@ -63,7 +63,7 @@ const globPath = computed(() => {
 });
 
 const resultFiles = computed(() => {
-  if (!props.toolResult?.content) return [];
+  if (!props.toolResult?.content) {return [];}
 
   const content = props.toolResult.content;
 

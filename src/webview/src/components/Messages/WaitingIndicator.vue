@@ -69,8 +69,8 @@
   });
 
   onBeforeUnmount(() => {
-    if (iconTimer) clearInterval(iconTimer);
-    if (verbTimer) clearTimeout(verbTimer);
+    if (iconTimer) {clearInterval(iconTimer);}
+    if (verbTimer) {clearTimeout(verbTimer);}
     stopTextAnimation();
   });
 
@@ -88,7 +88,7 @@
   }
 
   function replaceAt(s: string, index: number, ch: string): string {
-    if (index < 0 || index >= s.length) return s;
+    if (index < 0 || index >= s.length) {return s;}
     return s.slice(0, index) + ch + s.slice(index + 1);
   }
 
@@ -101,7 +101,7 @@
     targetChar: string,
     phase: number
   ): string {
-    if (targetChar === ' ') return ' ';
+    if (targetChar === ' ') {return ' ';}
     switch (phase) {
       case 3:
         return targetChar;
@@ -127,7 +127,7 @@
     }
 
     const step = (ts: number) => {
-      if (!lastTick) lastTick = ts;
+      if (!lastTick) {lastTick = ts;}
       if (ts - lastTick < stepMs) {
         rafId = requestAnimationFrame(step);
         return;

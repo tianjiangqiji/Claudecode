@@ -34,6 +34,8 @@ import type {
     ListSessionsResponse,
     GetSessionRequest,
     GetSessionResponse,
+    DeleteSessionRequest,
+    DeleteSessionResponse,
     ExecRequest,
     ExecResponse,
     ListFilesRequest,
@@ -421,6 +423,27 @@ export async function handleGetSession(
     }
 }
 
+export async function handleDeleteSession(
+    request: DeleteSessionRequest,
+    context: HandlerContext
+): Promise<DeleteSessionResponse> {
+    const { logService, sessionService, workspaceService } = context;
+
+    try {
+        const cwd = workspaceService.getDefaultWorkspaceFolder()?.uri.fsPath || process.cwd();
+        const ok = await sessionService.deleteSession(request.sessionId, cwd);
+        return {
+            type: "delete_session_response",
+            success: !!ok
+        };
+    } catch (error) {
+        logService.error(`Failed to delete session: ${error}`);
+        return {
+            type: "delete_session_response",
+            success: false
+        };
+    }
+}
 /**
  * 执行命令
  */
@@ -510,8 +533,8 @@ export async function handleStatPath(
             const stat = await fs.promises.stat(absolute);
             let type: StatPathResponse["entries"][number]["type"] = "other";
 
-            if (stat.isFile()) type = "file";
-            else if (stat.isDirectory()) type = "directory";
+            if (stat.isFile()) {type = "file";}
+            else if (stat.isDirectory()) {type = "directory";}
 
             entries.push({ path: raw, type });
         } catch {

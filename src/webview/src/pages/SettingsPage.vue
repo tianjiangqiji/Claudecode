@@ -33,6 +33,7 @@
           </div>
           <span v-if="apiKeyMasked && !apiKey" class="form-hint">已保存，输入新值可覆盖</span>
           <span v-else class="form-hint">设置后将作为 ANTHROPIC_API_KEY 注入 SDK</span>
+          <span v-if="sdkApiKeyMasked && !apiKey" class="form-hint">Claude Code 默认值: {{ sdkApiKeyMasked }}</span>
         </div>
 
         <div class="form-group">
@@ -45,20 +46,71 @@
             @change="saveConfig"
           />
           <span class="form-hint">设置后将作为 ANTHROPIC_BASE_URL 注入 SDK</span>
+          <span v-if="sdkBaseUrl && !baseUrl" class="form-hint">Claude Code 默认值: {{ sdkBaseUrl }}</span>
+        </div>
+
+        <!-- 默认模型覆盖 -->
+        <div class="form-group">
+          <label class="form-label">Haiku 模型 ID（可选）</label>
+          <input
+            type="text"
+            class="form-input"
+            v-model="defaultHaikuModel"
+            placeholder="如 claude-3-haiku-20240307"
+            @change="saveConfig"
+          />
+          <span class="form-hint">注入 ANTHROPIC_DEFAULT_HAIKU_MODEL</span>
+          <span v-if="sdkDefaultHaikuModel && !defaultHaikuModel" class="form-hint">Claude Code 默认值: {{ sdkDefaultHaikuModel }}</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sonnet 模型 ID（可选）</label>
+          <input
+            type="text"
+            class="form-input"
+            v-model="defaultSonnetModel"
+            placeholder="如 claude-3-5-sonnet-20241022"
+            @change="saveConfig"
+          />
+          <span class="form-hint">注入 ANTHROPIC_DEFAULT_SONNET_MODEL</span>
+          <span v-if="sdkDefaultSonnetModel && !defaultSonnetModel" class="form-hint">Claude Code 默认值: {{ sdkDefaultSonnetModel }}</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Opus 模型 ID（可选）</label>
+          <input
+            type="text"
+            class="form-input"
+            v-model="defaultOpusModel"
+            placeholder="如 claude-3-opus-20240229"
+            @change="saveConfig"
+          />
+          <span class="form-hint">注入 ANTHROPIC_DEFAULT_OPUS_MODEL</span>
+          <span v-if="sdkDefaultOpusModel && !defaultOpusModel" class="form-hint">Claude Code 默认值: {{ sdkDefaultOpusModel }}</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reasoning 模型 ID（可选）</label>
+          <input
+            type="text"
+            class="form-input"
+            v-model="reasoningModel"
+            placeholder="如 claude-3-7-sonnet-20250219"
+            @change="saveConfig"
+          />
+          <span class="form-hint">注入 ANTHROPIC_REASONING_MODEL</span>
+          <span v-if="sdkReasoningModel && !reasoningModel" class="form-hint">Claude Code 默认值: {{ sdkReasoningModel }}</span>
         </div>
       </section>
 
-      <!-- 自定义模型 -->
+      <!-- 主模型选择器 -->
       <section class="settings-section">
         <h3 class="section-title">
-          自定义模型
+          主模型选择器
           <button class="add-btn" @click="addCustomModel">
             <span class="codicon codicon-add"></span>
           </button>
         </h3>
 
         <div v-if="customModels.length === 0" class="empty-hint">
-          暂无自定义模型，点击 + 添加
+          暂无主模型选择器，点击 + 添加
         </div>
 
         <div v-for="(model, index) in customModels" :key="index" class="custom-model-card">
@@ -145,13 +197,23 @@ const emit = defineEmits<{
 }>()
 
 const runtime = inject(RuntimeKey)
-if (!runtime) throw new Error('[SettingsPage] runtime not provided')
+if (!runtime) {throw new Error('[SettingsPage] runtime not provided')}
 
 // 状态
 const apiKey = ref('')
 const apiKeyMasked = ref('')
 const showApiKey = ref(false)
 const baseUrl = ref('')
+const defaultHaikuModel = ref('')
+const defaultOpusModel = ref('')
+const defaultSonnetModel = ref('')
+const reasoningModel = ref('')
+const sdkApiKeyMasked = ref('')
+const sdkBaseUrl = ref('')
+const sdkDefaultHaikuModel = ref('')
+const sdkDefaultOpusModel = ref('')
+const sdkDefaultSonnetModel = ref('')
+const sdkReasoningModel = ref('')
 const customModels = ref<Array<{ id: string; label: string; description?: string }>>([])
 const appendRule = ref('')
 const appendRuleEnabled = ref(true)
@@ -166,6 +228,16 @@ async function loadProviderStatus() {
     if (response) {
       apiKeyMasked.value = response.apiKeyMasked || ''
       baseUrl.value = response.baseUrl || ''
+      defaultHaikuModel.value = response.defaultHaikuModel || ''
+      defaultOpusModel.value = response.defaultOpusModel || ''
+      defaultSonnetModel.value = response.defaultSonnetModel || ''
+      reasoningModel.value = response.reasoningModel || ''
+      sdkApiKeyMasked.value = response.sdkDefaults?.apiKeyMasked || ''
+      sdkBaseUrl.value = response.sdkDefaults?.baseUrl || ''
+      sdkDefaultHaikuModel.value = response.sdkDefaults?.defaultHaikuModel || ''
+      sdkDefaultOpusModel.value = response.sdkDefaults?.defaultOpusModel || ''
+      sdkDefaultSonnetModel.value = response.sdkDefaults?.defaultSonnetModel || ''
+      sdkReasoningModel.value = response.sdkDefaults?.reasoningModel || ''
 
       // 回显自定义模型
       if (response.customModels && Array.isArray(response.customModels) && response.customModels.length > 0) {
@@ -214,9 +286,13 @@ async function saveConfig() {
     // 只发送有值的字段，避免 undefined 覆盖后端已有配置
     // 深拷贝对象/数组，防止 Vue Proxy 序列化问题
     const config: Record<string, any> = {}
-    if (apiKey.value) config.apiKey = apiKey.value
-    if (baseUrl.value) config.baseUrl = baseUrl.value
-    config.customModels = JSON.parse(JSON.stringify(customModels.value))
+    if (apiKey.value) {config.apiKey = apiKey.value}
+    if (baseUrl.value) {config.baseUrl = baseUrl.value}
+    if (defaultHaikuModel.value) {config.defaultHaikuModel = defaultHaikuModel.value}
+    if (defaultOpusModel.value) {config.defaultOpusModel = defaultOpusModel.value}
+    if (defaultSonnetModel.value) {config.defaultSonnetModel = defaultSonnetModel.value}
+    if (reasoningModel.value) {config.reasoningModel = reasoningModel.value}
+    config.customModels = JSON.parse(JSON.stringify(customModels.value.filter(m => m.id && m.label)))
     config.appendRule = appendRule.value
     config.appendRuleEnabled = appendRuleEnabled.value
 
@@ -236,12 +312,12 @@ async function saveConfig() {
     saveStatus.value = 'saved'
 
     // 2秒后清除保存状态
-    if (saveTimer) clearTimeout(saveTimer)
+    if (saveTimer) {clearTimeout(saveTimer)}
     saveTimer = setTimeout(() => { saveStatus.value = 'idle' }, 2000)
   } catch (e) {
     console.error('[SettingsPage] 保存配置失败:', e)
     saveStatus.value = 'error'
-    if (saveTimer) clearTimeout(saveTimer)
+    if (saveTimer) {clearTimeout(saveTimer)}
     saveTimer = setTimeout(() => { saveStatus.value = 'idle' }, 3000)
   }
 }

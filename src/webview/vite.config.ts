@@ -91,7 +91,7 @@ export default defineConfig(({ mode }) => ({
         entryFileNames: 'main.js',
         assetFileNames: (assetInfo) => {
           const name = assetInfo.name ?? '';
-          if (name.endsWith('.css')) return 'style.css';
+          if (name.endsWith('.css')) {return 'style.css';}
           if (name.includes('materialdesignicons-webfont') && name.endsWith('.woff2')) {
             return 'materialicon.woff2';
           }

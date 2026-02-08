@@ -71,7 +71,16 @@
         >
             <div class="session-card-header">
               <h3 class="session-title">{{ session.summary.value || '新对话' }}</h3>
-              <div class="session-date">{{ formatRelativeTime(session.lastModifiedTime.value) }}</div>
+              <div class="session-actions">
+                <div class="session-date">{{ formatRelativeTime(session.lastModifiedTime.value) }}</div>
+                <button
+                  class="session-delete-btn"
+                  title="删除会话"
+                  @click.stop="deleteSession(session)"
+                >
+                  <span class="codicon codicon-trash"></span>
+                </button>
+              </div>
             </div>
 
             <div class="session-meta">
@@ -157,11 +166,21 @@ const refreshSessions = async () => {
 
 
 const openSession = (wrappedSession: ReturnType<typeof useSession> | undefined) => {
-  if (!wrappedSession) return;
+  if (!wrappedSession) {return;}
   // 🔥 从包装对象中获取原始 Session 实例
   const rawSession = wrappedSession.__session;
   store.setActiveSession(rawSession);
   emit('switchToChat', wrappedSession.sessionId.value);
+};
+
+const deleteSession = async (wrappedSession: ReturnType<typeof useSession> | undefined) => {
+  if (!wrappedSession?.sessionId.value) {return;}
+  const confirmed = window.confirm('确定删除该会话吗？此操作不可恢复。');
+  if (!confirmed) {return;}
+  const success = await store.deleteSession(wrappedSession.sessionId.value);
+  if (!success) {
+    error.value = '删除会话失败';
+  }
 };
 
 
@@ -195,16 +214,16 @@ const hideSearch = () => {
 
 // 格式化相对时间
 function formatRelativeTime(input?: number | string | Date): string {
-  if (input === undefined || input === null) return '刚刚';
+  if (input === undefined || input === null) {return '刚刚';}
   const date = input instanceof Date ? input : new Date(input);
-  if (Number.isNaN(date.getTime())) return '刚刚';
+  if (Number.isNaN(date.getTime())) {return '刚刚';}
 
   const diff = Date.now() - date.getTime();
-  if (diff < 60_000) return '刚刚';
-  if (diff < 3_600_000) return `${Math.max(1, Math.round(diff / 60_000))}分钟前`;
-  if (diff < 86_400_000) return `${Math.max(1, Math.round(diff / 3_600_000))}小时前`;
+  if (diff < 60_000) {return '刚刚';}
+  if (diff < 3_600_000) {return `${Math.max(1, Math.round(diff / 60_000))}分钟前`;}
+  if (diff < 86_400_000) {return `${Math.max(1, Math.round(diff / 3_600_000))}小时前`;}
   const days = Math.max(1, Math.round(diff / 86_400_000));
-  if (days < 7) return `${days}天前`;
+  if (days < 7) {return `${days}天前`;}
   return date.toLocaleDateString('zh-CN');
 }
 
@@ -472,6 +491,26 @@ onMounted(() => {
   font-size: 11px;
   color: var(--vscode-descriptionForeground);
   white-space: nowrap;
+}
+
+.session-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-delete-btn {
+  border: none;
+  background: transparent;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.session-delete-btn:hover {
+  color: var(--vscode-errorForeground);
+  background: var(--vscode-list-hoverBackground);
 }
 
 .session-meta {

@@ -10,7 +10,7 @@ export function useKeybinding(binding: KeyBinding | KeyBinding[]) {
   })
 
   onUnmounted(() => {
-    for (const u of unsubs) try { u() } catch {}
+    for (const u of unsubs) {try { u() } catch {}}
     unsubs = []
   })
 }

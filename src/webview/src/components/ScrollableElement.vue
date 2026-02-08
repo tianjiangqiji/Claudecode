@@ -185,7 +185,7 @@ const horizontalSliderStyle = computed((): CSSProperties => {
 
 // 更新尺寸信息
 const updateDimensions = () => {
-  if (!contentWrapper.value || !contentContainer.value) return
+  if (!contentWrapper.value || !contentContainer.value) {return}
 
   const wrapperRect = contentWrapper.value.getBoundingClientRect()
   clientHeight.value = wrapperRect.height
@@ -301,7 +301,7 @@ const startHorizontalDrag = (event: MouseEvent) => {
 
 // 处理拖拽
 const handleDrag = (event: MouseEvent) => {
-  if (!isDragging.value) return
+  if (!isDragging.value) {return}
 
   if (dragType.value === 'vertical') {
     const deltaY = event.clientY - dragStartPos.value

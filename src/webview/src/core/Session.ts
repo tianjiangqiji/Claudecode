@@ -171,7 +171,7 @@ export class Session {
 
   async loadFromServer(): Promise<void> {
     const sessionId = this.sessionId();
-    if (!sessionId) return;
+    if (!sessionId) {return;}
 
     this.isLoading(true);
     try {
@@ -234,7 +234,7 @@ export class Session {
 
     try {
       const channelId = this.claudeChannelId();
-      if (!channelId) throw new Error('No active channel');
+      if (!channelId) {throw new Error('No active channel');}
       connection.sendInput(channelId, userMessage, false);
     } catch (error) {
       this.busy(false);
@@ -582,8 +582,8 @@ This may or may not be related to the current task.</ide_selection>`
   }
 
   private isSameSelection(a?: SelectionRange, b?: SelectionRange): boolean {
-    if (!a && !b) return true;
-    if (!a || !b) return false;
+    if (!a && !b) {return true;}
+    if (!a || !b) {return false;}
     return (
       a.filePath === b.filePath &&
       a.startLine === b.startLine &&

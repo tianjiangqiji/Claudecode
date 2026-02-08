@@ -22,3 +22,9 @@ export const workspace = {
 export const commands = {
 	registerCommand: () => ({ dispose: () => { } })
 };
+
+export enum ExtensionMode {
+	Production = 1,
+	Development = 2,
+	Test = 3,
+}

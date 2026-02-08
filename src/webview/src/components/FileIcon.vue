@@ -39,11 +39,11 @@ const iconConfig = computed((): IconConfig => {
 
   // 1) 完整文件名（specialFileNameMap）
   const special = specialFileNameMap[baseName];
-  if (special) return special;
+  if (special) {return special;}
 
   // 2) 完整文件名（fileExtensionMap 内含有些“文件名+扩展名”的条目）
   const fullInExtMap = (fileExtensionMap as Record<string, IconConfig | undefined>)[baseName];
-  if (fullInExtMap) return fullInExtMap;
+  if (fullInExtMap) {return fullInExtMap;}
 
   // 3) 复合后缀匹配（如 spec.ts / d.ts / e2e-spec.ts 等）从长到短
   const parts = baseName.split('.');
@@ -51,7 +51,7 @@ const iconConfig = computed((): IconConfig => {
     for (let start = 1; start < parts.length; start++) {
       const suffix = parts.slice(start).join('.');
       const hit = (fileExtensionMap as Record<string, IconConfig | undefined>)[suffix];
-      if (hit) return hit;
+      if (hit) {return hit;}
     }
   }
 
@@ -70,7 +70,7 @@ function resolveFolderIcon(name: string, fullPath: string): FolderIconConfig {
   }
   const base = name.replace(/^\./, '')
   const hit = folderNameMap[base]
-  if (hit) return hit
+  if (hit) {return hit}
   return defaultFolderIcon
 }
 </script>
