@@ -44,12 +44,39 @@ export function findToolUseBlock(
             // content 应该是 ContentBlockWrapper[]
             if (Array.isArray(content)) {
                 for (const wrapper of content) {
-                    // 检查是否是 tool_use 且 id 匹配
-                    if (
-                        wrapper.content.type === 'tool_use' &&
-                        (wrapper.content as ToolUseContentBlock).id === toolUseId
-                    ) {
-                        return wrapper;
+                    const found = findInWrapper(wrapper, toolUseId);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+        }
+    }
+
+    return undefined;
+}
+
+/**
+ * 递归在 ContentBlockWrapper 及其子消息中查找 tool_use
+ */
+function findInWrapper(wrapper: ContentBlockWrapper, toolUseId: string): ContentBlockWrapper | undefined {
+    // 检查当前 block 是否匹配
+    if (
+        wrapper.content.type === 'tool_use' &&
+        (wrapper.content as ToolUseContentBlock).id === toolUseId
+    ) {
+        return wrapper;
+    }
+
+    // 递归查找子消息
+    const children = wrapper.children();
+    if (children && children.length > 0) {
+        for (const child of children) {
+            if (child.type === 'assistant' && Array.isArray(child.message.content)) {
+                for (const subWrapper of child.message.content) {
+                    const found = findInWrapper(subWrapper, toolUseId);
+                    if (found) {
+                        return found;
                     }
                 }
             }
@@ -141,11 +168,25 @@ export function processAndAttachMessage(messages: Message[], rawEvent: any): voi
         }
     }
 
-    // 2. 将原始事件转换为 Message 并添加到数组
+    // 2. 将原始事件转换为 Message
     const message = Message.fromRaw(rawEvent);
-    if (message) {
-        messages.push(message);
+    if (!message) {
+        return;
     }
+
+    // 3. 处理嵌套消息 (SubAgent)
+    // 如果 rawEvent 有 parent_tool_use_id,则将其挂载到父 tool_use 块下,不再添加到顶级消息数组
+    const parentToolUseId = rawEvent.parent_tool_use_id || rawEvent.message?.parent_tool_use_id;
+    if (parentToolUseId) {
+        const parentWrapper = findToolUseBlock(messages, parentToolUseId);
+        if (parentWrapper) {
+            parentWrapper.addChild(message);
+            return; // 挂载到父节点后，不添加到顶级数组
+        }
+    }
+
+    // 4. 添加到顶级数组
+    messages.push(message);
 }
 
 /**

@@ -30,6 +30,11 @@ export class ContentBlockWrapper {
   private readonly toolResultSignal = signal<ToolResultBlock | undefined>(undefined);
 
   /**
+   * 子消息（用于 SubAgent 的嵌套渲染）
+   */
+  private readonly childrenSignal = signal<any[]>([]);
+
+  /**
    * Tool Use Result（普通属性）
    * 用于会话加载时的 toolUseResult（不需要响应式）
    */
@@ -46,6 +51,21 @@ export class ContentBlockWrapper {
    */
   get toolResult() {
     return this.toolResultSignal;
+  }
+
+  /**
+   * 获取 children signal
+   */
+  get children() {
+    return this.childrenSignal;
+  }
+
+  /**
+   * 添加子消息
+   */
+  addChild(message: any): void {
+    const current = this.childrenSignal();
+    this.childrenSignal([...current, message]);
   }
 
   /**

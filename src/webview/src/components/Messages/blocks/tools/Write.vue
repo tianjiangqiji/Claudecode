@@ -39,7 +39,14 @@
 
           <!-- 右侧内容列 -->
           <div ref="contentRef" class="write-content" @scroll="handleContentScroll">
-            <pre class="content-text">{{ content }}</pre>
+            <div class="content-lines">
+              <div
+                v-for="(line, idx) in lines"
+                :key="idx"
+                class="content-line"
+                v-html="highlightLine(line)"
+              ></div>
+            </div>
           </div>
         </div>
       </div>
@@ -58,6 +65,7 @@ import ToolMessageWrapper from './common/ToolMessageWrapper.vue';
 import ToolError from './common/ToolError.vue';
 import ToolFilePath from './common/ToolFilePath.vue';
 import FileIcon from '@/components/FileIcon.vue';
+import { highlight } from '@/utils/highlighter';
 
 interface Props {
   toolUse?: any;
@@ -95,9 +103,19 @@ const contentStats = computed(() => {
 
 // 行数
 const lineCount = computed(() => {
-  if (!content.value) {return 0;}
-  return content.value.split('\n').length;
+  return lines.value.length;
 });
+
+const lines = computed(() => {
+  if (!content.value) {return [];}
+  return content.value.split('\n');
+});
+
+// 语法高亮
+function highlightLine(line: string): string {
+  if (!line) return '&nbsp;';
+  return highlight(line, filePath.value);
+}
 
 // 是否有内容视图
 const hasContentView = computed(() => {
@@ -253,16 +271,28 @@ function handleContentScroll() {
   background: transparent;
 }
 
-.content-text {
+.content-lines {
   background-color: var(--vscode-editor-background);
-  color: var(--vscode-editor-foreground);
+  width: fit-content;
+  min-width: 100%;
+}
+
+.content-line {
+  height: 22px;
+  line-height: 22px;
+  padding: 0 8px 0 4px;
   font-family: var(--vscode-editor-font-family);
   font-size: 0.85em;
-  line-height: 22px;
-  margin: 0;
-  padding: 0 8px 0 4px;
+  color: var(--vscode-editor-foreground);
   white-space: pre;
-  min-width: 100%;
-  width: fit-content;
 }
+
+/* 语法高亮 Token 颜色 */
+:deep(.token-keyword) { color: var(--vscode-symbolIcon-keywordForeground); font-weight: 500; }
+:deep(.token-string) { color: var(--vscode-debugToken-stringForeground); }
+:deep(.token-comment) { color: var(--vscode-editorCodeLens-foreground); font-style: italic; }
+:deep(.token-number) { color: var(--vscode-debugToken-numberForeground); }
+:deep(.token-operator) { color: var(--vscode-symbolIcon-operatorForeground); }
+:deep(.token-punctuation) { color: var(--vscode-foreground); opacity: 0.8; }
+:deep(.token-tag) { color: var(--vscode-symbolIcon-classForeground); }
 </style>

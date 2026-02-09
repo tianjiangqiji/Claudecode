@@ -214,19 +214,20 @@ async function handleRestore() {
   const session = activeSession.value;
   if (!session) {return;}
   
-  const choice = await session.showMessage(
+  const selected = await session.showMessage(
     'warning',
-    '确定要回滚到此消息吗？\n\n注意：这将删除此消息之后的所有对话记录。',
-    ['仅撤回聊天记录', '回滚聊天记录与在此区间编辑的文件', '取消'],
-    false
+    '确定要撤回该操作及其之后的所有历史记录吗？这还将尝试回滚相关的代码变更。',
+    ['撤回所有操作', '取消'],
+    true
   );
 
-  if (!choice || choice === '取消') {
-    return;
+  if (selected === '撤回所有操作') {
+    try {
+      await session.rollbackToMessage(props.message, { rewindFiles: true, deleteHistory: true });
+    } catch (e) {
+      console.error('Rollback failed:', e);
+    }
   }
-
-  const rewindFiles = choice === '回滚聊天记录与在此区间编辑的文件';
-  await session.rollbackToMessage(props.message, { rewindFiles });
 }
 
 // 监听键盘事件

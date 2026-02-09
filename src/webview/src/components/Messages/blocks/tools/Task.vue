@@ -20,6 +20,22 @@
         <pre class="prompt-content">{{ prompt }}</pre>
       </div>
 
+      <!-- 嵌套子工具调用 -->
+      <div v-if="children && children.length > 0" class="children-section">
+        <div class="section-header">
+          <span class="codicon codicon-split-vertical"></span>
+          <span>子任务进展</span>
+        </div>
+        <div class="children-list">
+          <MessageRenderer
+            v-for="(child, idx) in children"
+            :key="child.uuid || idx"
+            :message="child"
+            :context="context!"
+          />
+        </div>
+      </div>
+
       <!-- 错误内容 -->
       <ToolError :tool-result="toolResult" />
     </template>
@@ -28,16 +44,25 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useSignal } from '@gn8/alien-signals-vue';
+import type { ToolContext } from '@/types/tool';
+import type { ContentBlockWrapper } from '@/models/ContentBlockWrapper';
 import ToolMessageWrapper from './common/ToolMessageWrapper.vue';
 import ToolError from './common/ToolError.vue';
+import MessageRenderer from '../../MessageRenderer.vue';
 
 interface Props {
   toolUse?: any;
   toolResult?: any;
   toolUseResult?: any;
+  wrapper?: ContentBlockWrapper;
+  context?: ToolContext;
 }
 
 const props = defineProps<Props>();
+
+// 使用 useSignal 追踪嵌套子消息
+const children = props.wrapper ? useSignal(props.wrapper.children) : computed(() => []);
 
 // 子代理类型
 const subagentType = computed(() => {
@@ -101,6 +126,17 @@ const shouldExpand = computed(() => {
 
 .prompt-section {
   margin-bottom: 12px;
+}
+
+.children-section {
+  margin-top: 12px;
+  border-top: 1px solid var(--vscode-panel-border);
+  padding-top: 12px;
+}
+
+.children-list {
+  padding-left: 8px;
+  border-left: 2px solid color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
 }
 
 .section-header {

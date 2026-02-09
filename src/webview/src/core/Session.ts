@@ -426,7 +426,7 @@ export class Session {
     return result.selected;
   }
 
-  async rollbackToMessage(message: Message, options?: { rewindFiles?: boolean }): Promise<boolean> {
+  async rollbackToMessage(message: Message, options?: { rewindFiles?: boolean, deleteHistory?: boolean }): Promise<boolean> {
     const messages = this.messages();
     const index = messages.indexOf(message);
     if (index === -1) {
@@ -438,47 +438,48 @@ export class Session {
       await this.interrupt();
     }
 
-    // 处理文件回滚
-    if (options?.rewindFiles) {
-      // 检查 message 是否有 uuid (SDK 需要 uuid)
-      // 我们假设 message.uuid 是 SDK 提供的 uuid。如果 message 是 UserMessage，我们需要确保它有 uuid。
-      // 注意：Frontend 的 Message 类型可能不包含 uuid，需要检查。
-      // 实际上，Message 类型定义在 types.ts 中。
-      // 如果没有 uuid，我们可能无法回滚。
-      
-      const messageId = (message as any).uuid;
-      if (messageId && this.claudeChannelId()) {
-          try {
-             const conn = this.connection();
-             if (conn) {
-                 const result = await (conn as any).request({
-                     type: 'rewind_files',
-                     channelId: this.claudeChannelId(),
-                     messageId: messageId
-                 });
-                 if (!result.success) {
-                     console.error('File rewind failed:', result.error);
-                     // 这里可以选择是否中断回滚，或者仅仅提示警告
-                     // 目前我们仅仅 log 错误，继续回滚对话状态
-                     alert(`文件回滚失败: ${result.error || '未知错误'}`);
-                 }
-             }
-          } catch (e) {
-              console.error('File rewind error:', e);
-              alert(`文件回滚出错: ${e}`);
-          }
+    const messageId = (message as any).uuid;
+    const channelId = this.claudeChannelId();
+    const conn = this.connection();
+
+    // 1. 处理文件回滚
+    if (options?.rewindFiles && messageId && channelId && conn) {
+      try {
+        console.log('[rollbackToMessage] Sending rewind_files request...', messageId);
+        const result = await (conn as any).request({
+          type: 'rewind_files',
+          channelId: channelId,
+          messageId: messageId
+        });
+        if (!result.success) {
+          console.error('File rewind failed:', result.error);
+          await this.context.showNotification?.(`文件回滚失败: ${result.error || '未知错误'}`, 'error');
+        }
+      } catch (e) {
+        console.error('File rewind error:', e);
       }
     }
 
-    // 删除该消息及之后的所有消息
-    // index 是要删除的第一条消息的索引
-    const newMessages = messages.slice(0, index);
-    this.messages(newMessages);
-    
-    // 如果消息列表变空，可能需要重置状态
-    if (newMessages.length === 0) {
-      this.summary(undefined);
+    // 2. 处理物理截断历史记录 (Task 6)
+    if (options?.deleteHistory && messageId && channelId && conn) {
+      try {
+        console.log('[rollbackToMessage] Sending truncate_history request...', messageId);
+        const result = await (conn as any).request({ 
+          type: 'truncate_history',
+          channelId: channelId,
+          messageId: messageId
+        });
+        if (!result.success) {
+          console.warn('History truncation failed:', result.error);
+        }
+      } catch (e) {
+        console.error('History truncation error:', e);
+      }
     }
+
+    // 3. UI 层面删除该消息之后的所有消息 (保留当前消息)
+    const newMessages = messages.slice(0, index + 1);
+    this.messages(newMessages);
 
     return true;
   }

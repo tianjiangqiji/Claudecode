@@ -60,6 +60,8 @@ import type {
     ReloadWindowResponse,
     RewindFilesRequest,
     RewindFilesResponse,
+    TruncateHistoryRequest,
+    TruncateHistoryResponse,
     ShowMessageRequest,
     ShowMessageResponse,
 } from '../../../shared/messages';
@@ -813,6 +815,37 @@ export async function handleRewindFiles(
             type: "rewind_files_response", 
             success: false, 
             error: errorMsg 
+        };
+    }
+}
+
+/**
+ * 截断历史
+ */
+export async function handleTruncateHistory(
+    request: TruncateHistoryRequest,
+    context: HandlerContext
+): Promise<TruncateHistoryResponse> {
+    const { logService, sessionService, workspaceService } = context;
+    const { channelId, messageId } = request;
+
+    logService.info(`[handleTruncateHistory] 截断历史请求: channelId=${channelId}, messageId=${messageId}`);
+
+    try {
+        const cwd = workspaceService.getDefaultWorkspaceFolder()?.uri.fsPath || process.cwd();
+        const ok = await sessionService.truncateHistory(channelId, messageId, cwd);
+
+        return {
+            type: "truncate_history_response",
+            success: !!ok
+        };
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        logService.error(`[handleTruncateHistory] 截断历史失败: ${errorMsg}`);
+        return {
+            type: "truncate_history_response",
+            success: false,
+            error: errorMsg
         };
     }
 }

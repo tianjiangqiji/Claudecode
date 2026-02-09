@@ -7,8 +7,11 @@
       <div class="plan-card">
         <!-- Plan 标题栏 -->
         <div class="plan-header">
-          <span class="codicon codicon-tasklist"></span>
-          <span class="plan-title">规划</span>
+          <div class="plan-header-left">
+            <span class="codicon codicon-checklist"></span>
+            <span class="plan-title">执行计划</span>
+          </div>
+          <div class="plan-badge">PLAN</div>
         </div>
 
         <!-- Plan 内容 -->
@@ -78,18 +81,36 @@ const toggleExpand = () => {
 .plan-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 8px 8px;
+  padding: 8px 12px;
   background-color: color-mix(in srgb, var(--vscode-editor-background) 95%, transparent);
   border-bottom: 1px solid var(--vscode-panel-border);
 }
 
+.plan-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-badge {
+  font-size: 0.75em;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  letter-spacing: 0.5px;
+}
+
 .plan-header .codicon {
   font-size: 16px;
+  color: var(--vscode-symbolIcon-propertyForeground);
 }
 
 .plan-title {
-  font-size: 1em;
+  font-size: 0.95em;
   font-weight: 600;
   color: var(--vscode-foreground);
 }

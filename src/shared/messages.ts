@@ -608,6 +608,18 @@ export interface RewindFilesResponse {
     details?: any;
 }
 
+export interface TruncateHistoryRequest {
+    type: "truncate_history";
+    channelId: string;
+    messageId: string;
+}
+
+export interface TruncateHistoryResponse {
+    type: "truncate_history_response";
+    success: boolean;
+    error?: string;
+}
+
 /**
  * 显示消息框请求
  */
@@ -753,7 +765,8 @@ export type WebViewRequest =
     | SetProviderRequest
     | UpdateProviderConfigRequest
     | GetProviderStatusRequest
-    | RewindFilesRequest;
+    | RewindFilesRequest
+    | TruncateHistoryRequest;
 
 /**
  * Extension → WebView 的所有响应类型
@@ -789,7 +802,8 @@ export type WebViewRequestResponse =
     | UpdateProviderConfigResponse
     | GetProviderStatusResponse
     | ReloadWindowResponse
-    | RewindFilesResponse;
+    | RewindFilesResponse
+    | TruncateHistoryResponse;
 
 /**
  * Extension → WebView 的所有请求类型

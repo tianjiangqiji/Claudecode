@@ -27,6 +27,32 @@ import { IClaudeSdkService } from './ClaudeSdkService';
 import { IClaudeSessionService } from './ClaudeSessionService';
 import { AsyncStream, ITransport } from './transport';
 import { HandlerContext } from './handlers/types';
+import { 
+    handleInit, 
+    handleGetClaudeState, 
+    handleGetMcpServers, 
+    handleGetAssetUris, 
+    handleOpenFile, 
+    handleGetCurrentSelection, 
+    handleOpenDiff, 
+    handleOpenContent, 
+    handleShowNotification, 
+    handleNewConversationTab, 
+    handleRenameTab, 
+    handleOpenURL, 
+    handleListSessions, 
+    handleGetSession, 
+    handleDeleteSession, 
+    handleExec, 
+    handleListFiles, 
+    handleStatPath, 
+    handleOpenConfigFile, 
+    handleOpenClaudeInTerminal, 
+    handleReloadWindow,
+    handleRewindFiles,
+    handleTruncateHistory,
+    handleShowMessage,
+} from './handlers/handlers';
 import { IWebViewService } from '../webViewService';
 import { ILLMProviderService } from '../llm/ILLMProvider';
 import { DEFAULT_MODELS } from '../llm/types';
@@ -55,36 +81,6 @@ import type {
     CanUseTool,
     PermissionMode,
 } from '@anthropic-ai/claude-agent-sdk';
-
-// Handlers 导入
-import {
-    handleInit,
-    handleGetClaudeState,
-    handleGetMcpServers,
-    handleGetAssetUris,
-    handleOpenFile,
-    handleGetCurrentSelection,
-    handleShowNotification,
-    handleNewConversationTab,
-    handleRenameTab,
-    handleOpenDiff,
-    handleListSessions,
-    handleGetSession,
-    handleDeleteSession,
-    handleExec,
-    handleListFiles,
-    handleStatPath,
-    handleOpenContent,
-    handleOpenURL,
-    handleOpenConfigFile,
-    handleReloadWindow,
-    handleRewindFiles,
-    handleShowMessage,
-    // handleOpenClaudeInTerminal,
-    // handleGetAuthStatus,
-    // handleLogin,
-    // handleSubmitOAuthCode,
-} from './handlers/handlers';
 
 export const IClaudeAgentService = createDecorator<IClaudeAgentService>('claudeAgentService');
 
@@ -404,13 +400,69 @@ export class ClaudeAgentService implements IClaudeAgentService {
                 inputStream,
                 resume,
                 async (toolName: string, input: any, options: any) => {
-                    // 自动允许所有工具执行，不弹窗询问用户
-                    this.logService.info(`🔧 自动允许工具: ${toolName}`);
-                    return {
-                        behavior: 'allow' as const,
-                        updatedInput: input,
-                        updatedPermissions: options.suggestions || []
-                    };
+                    this.logService.info(`🔧 工具调用请求: ${toolName}, 模式: ${permissionMode}`);
+
+                    // 1. 如果是 Edit 或 Write 相关工具，且不是自动允许模式，则自动打开 VSCode Diff 视图
+                    const isEditTool = ['Edit', 'Write', 'MultiEdit', 'NotebookEdit'].includes(toolName);
+                    
+                    if (isEditTool && (permissionMode === 'plan' || permissionMode === 'default')) {
+                        try {
+                            this.logService.info(`  → 正在为审批自动打开 Diff 视图: ${input.file_path || 'multiple files'}`);
+                            
+                            // 构造 OpenDiffRequest
+                            const edits = [];
+                            if (toolName === 'Edit' || toolName === 'Write') {
+                                edits.push({
+                                    oldString: input.old_string || '',
+                                    newString: input.new_string || '',
+                                    replaceAll: input.replace_all || false
+                                });
+                            } else if (toolName === 'MultiEdit' && Array.isArray(input.edits)) {
+                                // 处理 MultiEdit
+                                for (const edit of input.edits) {
+                                    edits.push({
+                                        oldString: edit.old_string || '',
+                                        newString: edit.new_string || '',
+                                        replaceAll: edit.replace_all || false
+                                    });
+                                }
+                            }
+
+                            // 异步触发打开 Diff，不阻塞权限请求
+                            void handleOpenDiff({
+                                type: "open_diff",
+                                originalFilePath: input.file_path || (input.edits?.[0]?.file_path) || "",
+                                newFilePath: "",
+                                edits,
+                                supportMultiEdits: toolName === 'MultiEdit'
+                            }, this.handlerContext, new AbortController().signal);
+                        } catch (e) {
+                            this.logService.warn(`  ⚠ 打开 Diff 视图失败: ${e}`);
+                        }
+                    }
+
+                    // 2. 根据权限模式决定是否自动允许
+                    // 'acceptEdits' 模式下自动允许
+                    if (permissionMode === 'acceptEdits') {
+                        this.logService.info(`  ✓ 自动允许工具执行 (acceptEdits 模式)`);
+                        return {
+                            behavior: 'allow' as const,
+                            updatedInput: input,
+                            updatedPermissions: options.suggestions || []
+                        };
+                    }
+
+                    // 3. 其他模式（plan, default）需要请求用户审批
+                    this.logService.info(`  ? 正在请求用户审批...`);
+                    const result = await this.requestToolPermission(
+                        channelId,
+                        toolName,
+                        input,
+                        options.suggestions || []
+                    );
+
+                    this.logService.info(`  ← 审批结果: ${result.behavior}`);
+                    return result;
                 },
                 model,
                 cwd,
@@ -740,6 +792,9 @@ export class ClaudeAgentService implements IClaudeAgentService {
 
             case "rewind_files":
                 return handleRewindFiles(request as any, this.handlerContext);
+
+            case "truncate_history":
+                return handleTruncateHistory(request as any, this.handlerContext);
 
             case "show_message":
                 return handleShowMessage(request as any, this.handlerContext);

@@ -73,6 +73,11 @@ export interface IClaudeSessionService {
     getSession(sessionIdOrPath: string, cwd: string): Promise<any[]>;
 
     deleteSession(sessionId: string, cwd: string): Promise<boolean>;
+
+    /**
+     * 截断会话历史，物理删除指定消息之后的所有记录
+     */
+    truncateHistory(sessionId: string, messageId: string, cwd: string): Promise<boolean>;
 }
 
 // ============================================================================
@@ -460,6 +465,55 @@ export class ClaudeSessionService implements IClaudeSessionService {
             return true;
         } catch (error) {
             this.logService.error(`[ClaudeSessionService] 删除会话失败:`, error);
+            return false;
+        }
+    }
+
+    async truncateHistory(sessionId: string, messageId: string, cwd: string): Promise<boolean> {
+        try {
+            this.logService.info(`[ClaudeSessionService] 截断会话历史: session=${sessionId}, message=${messageId}`);
+
+            const validated = validateSessionId(sessionId);
+            if (!validated) {
+                return false;
+            }
+
+            const projectDir = getProjectHistoryDir(cwd);
+            const filePath = path.join(projectDir, `${validated}.jsonl`);
+
+            // 1. 读取所有行
+            const content = await fs.readFile(filePath, "utf8");
+            const lines = content.split("\n").filter(l => l.trim());
+            
+            // 2. 找到目标消息所在的行索引
+            let foundIndex = -1;
+            for (let i = 0; i < lines.length; i++) {
+                try {
+                    const msg = JSON.parse(lines[i]);
+                    if (msg.uuid === messageId || (msg.type === 'assistant' && msg.message?.id === messageId)) {
+                        foundIndex = i;
+                        break;
+                    }
+                } catch {
+                    continue;
+                }
+            }
+
+            if (foundIndex === -1) {
+                this.logService.warn(`[ClaudeSessionService] 未找到目标消息: ${messageId}`);
+                return false;
+            }
+
+            // 3. 截断数组（保留目标消息及其之前的行）
+            const newLines = lines.slice(0, foundIndex + 1);
+            
+            // 4. 写回文件
+            await fs.writeFile(filePath, newLines.join("\n") + "\n", "utf8");
+            
+            this.logService.info(`[ClaudeSessionService] 已截断历史，保留 ${newLines.length} 条记录`);
+            return true;
+        } catch (error) {
+            this.logService.error(`[ClaudeSessionService] 截断历史失败:`, error);
             return false;
         }
     }

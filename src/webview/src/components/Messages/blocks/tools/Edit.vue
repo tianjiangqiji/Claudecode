@@ -57,7 +57,7 @@
                   :class="getDiffLineClass(line)"
                 >
                   <span class="line-prefix">{{ getLinePrefix(line) }}</span>
-                  <span class="line-content">{{ getLineContent(line) }}</span>
+                  <span class="line-content" v-html="highlightLine(line)"></span>
                 </div>
               </div>
             </div>
@@ -79,6 +79,7 @@ import ToolMessageWrapper from './common/ToolMessageWrapper.vue';
 import ToolError from './common/ToolError.vue';
 import ToolFilePath from './common/ToolFilePath.vue';
 import FileIcon from '@/components/FileIcon.vue';
+import { highlight } from '@/utils/highlighter';
 
 interface Props {
   toolUse?: any;
@@ -224,6 +225,12 @@ function getLineContent(line: string): string {
     return line.substring(1);
   }
   return line;
+}
+
+// 语法高亮
+function highlightLine(line: string): string {
+  const content = getLineContent(line);
+  return highlight(content, filePath.value);
 }
 
 // 计算行号（删除行显示旧行号，添加行显示新行号）
@@ -478,4 +485,13 @@ function getLineNumber(patch: any, lineIndex: number | string): string {
 .diff-line-context .line-content {
   color: var(--vscode-editor-foreground);
 }
+
+/* 语法高亮 Token 颜色 */
+:deep(.token-keyword) { color: var(--vscode-symbolIcon-keywordForeground); font-weight: 500; }
+:deep(.token-string) { color: var(--vscode-debugToken-stringForeground); }
+:deep(.token-comment) { color: var(--vscode-editorCodeLens-foreground); font-style: italic; }
+:deep(.token-number) { color: var(--vscode-debugToken-numberForeground); }
+:deep(.token-operator) { color: var(--vscode-symbolIcon-operatorForeground); }
+:deep(.token-punctuation) { color: var(--vscode-foreground); opacity: 0.8; }
+:deep(.token-tag) { color: var(--vscode-symbolIcon-classForeground); }
 </style>
